@@ -10,18 +10,20 @@ pub fn compute(p: &Path) -> io::Result<i64> {
     let mut lines = BufReader::new(f).lines();
 
     let mut res = 0;
-    while let Some(line) = lines.next().transpose()? {
-        let mut s = HashSet::<_>::from_iter(line.chars());
+    while let Some(line) = lines.next() {
+        let mut s = line?.chars().collect::<HashSet<_>>();
         for _ in 0..2 {
-            let line = lines
-                .next()
-                .ok_or(io::Error::new(io::ErrorKind::UnexpectedEof, ""))??;
-            let chars = line.chars().collect::<HashSet<_>>();
-            s.retain(|c| chars.contains(c))
+            let t = lines.next().ok_or_else(unexpected_eof)??;
+            let l = t.chars().collect::<HashSet<_>>();
+            s.retain(|c| l.contains(c))
         }
         s.iter().for_each(|c| res += score(*c));
     }
     Ok(res)
+}
+
+fn unexpected_eof() -> io::Error {
+    io::Error::new(io::ErrorKind::UnexpectedEof, "")
 }
 
 fn score(c: char) -> i64 {
