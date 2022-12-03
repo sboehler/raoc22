@@ -5,16 +5,34 @@ use std::{
     path::Path,
 };
 
-pub fn compute(p: &Path) -> io::Result<i64> {
+pub fn compute1(p: &Path) -> io::Result<i64> {
     let f = File::open(p)?;
     let mut lines = BufReader::new(f).lines();
 
     let mut res = 0;
     while let Some(line) = lines.next() {
-        let mut s = line?.chars().collect::<HashSet<_>>();
+        let ln = line?;
+        let bs = ln.as_bytes();
+        let l = bs.len() / 2;
+        let a: HashSet<_> = bs[0..l].iter().collect();
+        let b: HashSet<_> = bs[l..].iter().collect();
+        for c in a.intersection(&b) {
+            res += score(**c as char)
+        }
+    }
+    Ok(res)
+}
+
+pub fn compute2(p: &Path) -> io::Result<i64> {
+    let f = File::open(p)?;
+    let mut lines = BufReader::new(f).lines();
+
+    let mut res = 0;
+    while let Some(line) = lines.next() {
+        let mut s: HashSet<char> = line?.chars().collect();
         for _ in 0..2 {
             let t = lines.next().ok_or_else(unexpected_eof)??;
-            let l = t.chars().collect::<HashSet<_>>();
+            let l: HashSet<char> = t.chars().collect();
             s.retain(|c| l.contains(c))
         }
         s.iter().for_each(|c| res += score(*c));
@@ -41,7 +59,10 @@ mod tests {
 
     #[test]
     fn test_compute() {
-        assert_eq!(compute(Path::new("src/day3/example.txt")).unwrap(), 70);
-        assert_eq!(compute(Path::new("src/day3/input.txt")).unwrap(), 2683);
+        assert_eq!(compute1(Path::new("src/day3/example.txt")).unwrap(), 157);
+        assert_eq!(compute1(Path::new("src/day3/input.txt")).unwrap(), 7831);
+
+        assert_eq!(compute2(Path::new("src/day3/example.txt")).unwrap(), 70);
+        assert_eq!(compute2(Path::new("src/day3/input.txt")).unwrap(), 2683);
     }
 }
