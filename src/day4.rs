@@ -21,30 +21,33 @@ where
     F: Fn(&RangeInclusive<i64>, &RangeInclusive<i64>) -> bool,
 {
     let f = File::open(p)?;
-    let lines = BufReader::new(f).lines();
-
-    let mut res = 0;
-    for line in lines {
-        let (r1, r2) = decode(&line?)?;
-        if pred(&r2, &r1) {
-            res += 1;
-        }
-    }
-    Ok(res)
+    BufReader::new(f)
+        .lines()
+        .map(|res| {
+            res.and_then(|l| decode(&l))
+                .map(|(r1, r2)| pred(&r1, &r2) as i64)
+        })
+        .sum()
 }
 
 fn decode(s: &str) -> Result<(RangeInclusive<i64>, RangeInclusive<i64>)> {
-    match s.split_once(',') {
-        Some((a, b)) => Ok((decode_range(a)?, decode_range(b)?)),
-        None => Err(err(format!("invalid item: {}", s))),
-    }
+    s.split_once(',')
+        .ok_or_else(|| err(format!("invalid line: {}", s)))
+        .and_then(|(a, b)| {
+            let x = decode_range(a)?;
+            let y = decode_range(b)?;
+            Ok((x, y))
+        })
 }
 
 fn decode_range(s: &str) -> Result<RangeInclusive<i64>> {
-    match s.split_once('-') {
-        Some((a, b)) => Ok(parse_int(a)?..=parse_int(b)?),
-        None => Err(err(format!("invalid item: {}", s))),
-    }
+    s.split_once('-')
+        .ok_or_else(|| err(format!("invalid range: {}", s)))
+        .and_then(|(a, b)| {
+            let x = parse_int(a)?;
+            let y = parse_int(b)?;
+            Ok(x..=y)
+        })
 }
 
 fn parse_int(s: &str) -> Result<i64> {
