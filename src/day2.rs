@@ -1,5 +1,6 @@
+use std::error;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Result};
+use std::io::{self, BufRead, BufReader, Result};
 use std::path::Path;
 
 /**
@@ -17,17 +18,23 @@ pub fn compute<F>(p: &Path, decode: F) -> Result<i64>
 where
     F: Fn(&str, &str) -> i64,
 {
-    let f = File::open(p)?;
-    let mut res: i64 = 0;
-    for line in BufReader::new(f).lines() {
-        let ln = line.unwrap();
-        let s: Vec<&str> = ln.split(' ').collect();
-        if s.len() != 2 {
-            panic!("invalid string: {}", ln)
-        }
-        res += decode(s[0], s[1])
-    }
-    Ok(res)
+    BufReader::new(File::open(p)?)
+        .lines()
+        .map(|line_res| {
+            line_res.and_then(|line| {
+                line.split_once(' ')
+                    .ok_or_else(|| err(format!("invalid string: {}", line)))
+                    .map(|(a, b)| decode(a, b))
+            })
+        })
+        .sum()
+}
+
+fn err<E>(e: E) -> io::Error
+where
+    E: Into<Box<dyn error::Error + Send + Sync>>,
+{
+    io::Error::new(io::ErrorKind::Other, e)
 }
 
 pub fn decode1(s1: &str, s2: &str) -> i64 {
