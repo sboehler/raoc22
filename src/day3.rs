@@ -16,10 +16,10 @@ assert_eq!(compute1(Path::new("src/day3/input.txt")).unwrap(), 7831);
 */
 pub fn compute1(p: &Path) -> io::Result<i64> {
     let f = File::open(p)?;
-    let mut lines = BufReader::new(f).lines();
+    let lines = BufReader::new(f).lines();
 
     let mut res = 0;
-    while let Some(line) = lines.next() {
+    for line in lines {
         let ln = line?;
         let bs = ln.as_bytes();
         let l = bs.len() / 2;

@@ -21,7 +21,7 @@ where
     let mut res: i64 = 0;
     for line in BufReader::new(f).lines() {
         let ln = line.unwrap();
-        let s: Vec<&str> = ln.split(" ").collect();
+        let s: Vec<&str> = ln.split(' ').collect();
         if s.len() != 2 {
             panic!("invalid string: {}", ln)
         }
