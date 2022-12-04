@@ -1,7 +1,9 @@
 use std::error;
 use std::fs::File;
-use std::io::{self, BufRead, BufReader, Result};
+use std::io::{BufRead, BufReader};
 use std::path::Path;
+
+type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
 /**
 Day #2
@@ -18,36 +20,29 @@ pub fn compute<F>(p: &Path, decode: F) -> Result<i64>
 where
     F: Fn(&str, &str) -> i64,
 {
-    BufReader::new(File::open(p)?)
-        .lines()
-        .map(|line_res| {
-            line_res.and_then(|line| {
-                line.split_once(' ')
-                    .ok_or_else(|| err(format!("invalid string: {}", line)))
-                    .map(|(a, b)| decode(a, b))
-            })
-        })
-        .sum()
+    let f = File::open(p)?;
+    let mut res: i64 = 0;
+    for line in BufReader::new(f).lines() {
+        let s = line?;
+        res += match s.split_once(' ') {
+            Some((a, b)) => decode(a, b),
+            None => return Err(format!("invalid string: {}", s).into()),
+        }
+    }
+    Ok(res)
 }
 
-fn err<E>(e: E) -> io::Error
-where
-    E: Into<Box<dyn error::Error + Send + Sync>>,
-{
-    io::Error::new(io::ErrorKind::Other, e)
+pub fn decode1(s1: &str, s2: &str) -> Result<i64> {
+    let m = Move::from_str(s2)?;
+    let t = Move::from_str(s1)?;
+    Ok(Move::compute_score(m, t))
 }
 
-pub fn decode1(s1: &str, s2: &str) -> i64 {
-    let m = Move::from_str(s2);
-    let t = Move::from_str(s1);
-    Move::compute_score(m, t)
-}
-
-pub fn decode2(s1: &str, s2: &str) -> i64 {
-    let theirs = Move::from_str(s1);
-    let res = Outcome::from_str(s2);
+pub fn decode2(s1: &str, s2: &str) -> Result<i64> {
+    let theirs = Move::from_str(s1)?;
+    let res = Outcome::from_str(s2)?;
     let mine = Move::from_i64(((theirs as i64) + (res as i64) + 2) % 3);
-    Move::compute_score(mine, theirs)
+    Ok(Move::compute_score(mine, theirs))
 }
 
 #[derive(Copy, Clone)]
@@ -72,12 +67,12 @@ impl Move {
         }
     }
 
-    fn from_str(s: &str) -> Move {
+    fn from_str(s: &str) -> Result<Move> {
         match s {
-            "A" | "X" => Move::Rock,
-            "B" | "Y" => Move::Paper,
-            "C" | "Z" => Move::Scissors,
-            _ => panic!("invalid move: {}", s),
+            "A" | "X" => Ok(Move::Rock),
+            "B" | "Y" => Ok(Move::Paper),
+            "C" | "Z" => Ok(Move::Scissors),
+            _ => Err(format!("invalid move: {}", s).into()),
         }
     }
 }
@@ -88,12 +83,12 @@ enum Outcome {
     Win,
 }
 impl Outcome {
-    fn from_str(s: &str) -> Outcome {
+    fn from_str(s: &str) -> Result<Outcome> {
         match s {
-            "X" => Outcome::Lose,
-            "Y" => Outcome::Draw,
-            "Z" => Outcome::Win,
-            _ => panic!("invalid outcome: {}", s),
+            "X" => Ok(Outcome::Lose),
+            "Y" => Ok(Outcome::Draw),
+            "Z" => Ok(Outcome::Win),
+            _ => Err(format!("invalid outcome: {}", s).into()),
         }
     }
 }
