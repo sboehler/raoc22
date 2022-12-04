@@ -18,14 +18,14 @@ assert_eq!(compute(Path::new("src/day2/input.txt"), decode2).unwrap(), 10116);
 */
 pub fn compute<F>(p: &Path, decode: F) -> Result<i64>
 where
-    F: Fn(&str, &str) -> i64,
+    F: Fn(&str, &str) -> Result<i64>,
 {
     let f = File::open(p)?;
     let mut res: i64 = 0;
     for line in BufReader::new(f).lines() {
         let s = line?;
         res += match s.split_once(' ') {
-            Some((a, b)) => decode(a, b),
+            Some((a, b)) => decode(a, b)?,
             None => return Err(format!("invalid string: {}", s).into()),
         }
     }
