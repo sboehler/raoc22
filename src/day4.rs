@@ -51,7 +51,7 @@ fn decode_range(s: &str) -> Result<RangeInclusive<i64>> {
 }
 
 fn parse_int(s: &str) -> Result<i64> {
-    s.parse::<i64>().map_err(|e| err(e))
+    s.parse::<i64>().map_err(err)
 }
 
 fn err<E>(e: E) -> io::Error
