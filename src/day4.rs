@@ -1,9 +1,10 @@
 use std::cmp::{max, min};
-use std::error;
 use std::fs::File;
-use std::io::{self, BufRead, BufReader, Result};
+use std::io::{BufRead, BufReader};
 use std::ops::RangeInclusive;
 use std::path::Path;
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 /**
 Day #4, Part 1:
@@ -18,21 +19,23 @@ assert_eq!(compute(Path::new("src/day4/input.txt"), overlap).unwrap(), 843);
 */
 pub fn compute<F>(p: &Path, pred: F) -> Result<i64>
 where
-    F: Fn(&RangeInclusive<i64>, &RangeInclusive<i64>) -> bool,
+    F: Fn(&(RangeInclusive<i64>, RangeInclusive<i64>)) -> bool,
 {
     let f = File::open(p)?;
-    BufReader::new(f)
-        .lines()
-        .map(|res| {
-            res.and_then(|l| decode(&l))
-                .map(|(r1, r2)| pred(&r1, &r2) as i64)
-        })
-        .sum()
+    let mut res: i64 = 0;
+    for line in BufReader::new(f).lines() {
+        let ln = line?;
+        let ranges = decode(&ln)?;
+        if pred(&ranges) {
+            res += 1
+        }
+    }
+    Ok(res)
 }
 
 fn decode(s: &str) -> Result<(RangeInclusive<i64>, RangeInclusive<i64>)> {
     s.split_once(',')
-        .ok_or_else(|| err(format!("invalid line: {}", s)))
+        .ok_or_else(|| format!("invalid line: {}", s).into())
         .and_then(|(a, b)| {
             let x = decode_range(a)?;
             let y = decode_range(b)?;
@@ -42,30 +45,19 @@ fn decode(s: &str) -> Result<(RangeInclusive<i64>, RangeInclusive<i64>)> {
 
 fn decode_range(s: &str) -> Result<RangeInclusive<i64>> {
     s.split_once('-')
-        .ok_or_else(|| err(format!("invalid range: {}", s)))
+        .ok_or_else(|| format!("invalid range: {}", s).into())
         .and_then(|(a, b)| {
-            let x = parse_int(a)?;
-            let y = parse_int(b)?;
+            let x = a.parse::<i64>()?;
+            let y = b.parse::<i64>()?;
             Ok(x..=y)
         })
 }
 
-fn parse_int(s: &str) -> Result<i64> {
-    s.parse::<i64>().map_err(err)
+pub fn fully_contained(r: &(RangeInclusive<i64>, RangeInclusive<i64>)) -> bool {
+    return r.0.start() <= r.1.start() && r.0.end() >= r.1.end()
+        || r.1.start() <= r.0.start() && r.1.end() >= r.0.end();
 }
 
-fn err<E>(e: E) -> io::Error
-where
-    E: Into<Box<dyn error::Error + Send + Sync>>,
-{
-    io::Error::new(io::ErrorKind::Other, e)
-}
-
-pub fn fully_contained(r1: &RangeInclusive<i64>, r2: &RangeInclusive<i64>) -> bool {
-    return r1.start() <= r2.start() && r1.end() >= r2.end()
-        || r2.start() <= r1.start() && r2.end() >= r1.end();
-}
-
-pub fn overlap(r1: &RangeInclusive<i64>, r2: &RangeInclusive<i64>) -> bool {
-    return max(r1.start(), r2.start()) <= min(r1.end(), r2.end());
+pub fn overlap(r: &(RangeInclusive<i64>, RangeInclusive<i64>)) -> bool {
+    return max(r.0.start(), r.1.start()) <= min(r.0.end(), r.1.end());
 }
