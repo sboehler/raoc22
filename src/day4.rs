@@ -1,4 +1,5 @@
 use std::cmp::{max, min};
+use std::error;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Result};
 use std::ops::RangeInclusive;
@@ -33,19 +34,28 @@ where
 }
 
 fn decode(s: &str) -> Result<(RangeInclusive<i64>, RangeInclusive<i64>)> {
-    let ts = s
-        .split(',')
-        .flat_map(|t| t.split('-'))
-        .map(str::parse::<i64>)
-        .map(|r| r.map_err(|e| io::Error::new(io::ErrorKind::Other, e)))
-        .collect::<Result<Vec<i64>>>()?;
-    match ts.len() {
-        4 => Ok((ts[0]..=ts[1], ts[2]..=ts[3])),
-        _ => Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!("invalid item: {}", s),
-        )),
+    match s.split_once(',') {
+        Some((a, b)) => Ok((decode_range(a)?, decode_range(b)?)),
+        None => Err(err(format!("invalid item: {}", s))),
     }
+}
+
+fn decode_range(s: &str) -> Result<RangeInclusive<i64>> {
+    match s.split_once('-') {
+        Some((a, b)) => Ok(parse_int(a)?..=parse_int(b)?),
+        None => Err(err(format!("invalid item: {}", s))),
+    }
+}
+
+fn parse_int(s: &str) -> Result<i64> {
+    s.parse::<i64>().map_err(|e| err(e))
+}
+
+fn err<E>(e: E) -> io::Error
+where
+    E: Into<Box<dyn error::Error + Send + Sync>>,
+{
+    io::Error::new(io::ErrorKind::Other, e)
 }
 
 pub fn fully_contained(r1: &RangeInclusive<i64>, r2: &RangeInclusive<i64>) -> bool {
