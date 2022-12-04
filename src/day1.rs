@@ -1,5 +1,6 @@
+use std::error;
 use std::fs::File;
-use std::io::{BufRead, Result};
+use std::io::{self, BufRead, Result};
 use std::{io::BufReader, path::Path};
 
 /**
@@ -25,11 +26,18 @@ pub fn compute(p: &Path, n: usize) -> Result<i64> {
             max.update(sum);
             sum = 0;
         } else {
-            sum += ln.parse::<i64>().unwrap();
+            sum += ln.parse::<i64>().map_err(err)?;
         }
     }
     max.update(sum);
     Ok(max.sum())
+}
+
+fn err<E>(e: E) -> io::Error
+where
+    E: Into<Box<dyn error::Error + Send + Sync>>,
+{
+    io::Error::new(io::ErrorKind::Other, e)
 }
 
 struct Max {
