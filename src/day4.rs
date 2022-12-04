@@ -1,6 +1,6 @@
 use std::cmp::{max, min};
 use std::fs::File;
-use std::io::{BufRead, BufReader, Result};
+use std::io::{self, BufRead, BufReader, Result};
 use std::ops::RangeInclusive;
 use std::path::Path;
 
@@ -24,7 +24,7 @@ where
 
     let mut res = 0;
     for line in lines {
-        let (r1, r2) = decode(&line?);
+        let (r1, r2) = decode(&line?)?;
         if pred(&r2, &r1) {
             res += 1;
         }
@@ -32,13 +32,20 @@ where
     Ok(res)
 }
 
-fn decode(s: &str) -> (RangeInclusive<i64>, RangeInclusive<i64>) {
-    let ts: Vec<i64> = s
+fn decode(s: &str) -> Result<(RangeInclusive<i64>, RangeInclusive<i64>)> {
+    let ts = s
         .split(',')
         .flat_map(|t| t.split('-'))
-        .map(|c| c.parse::<i64>().unwrap())
-        .collect();
-    (ts[0]..=ts[1], ts[2]..=ts[3])
+        .map(str::parse::<i64>)
+        .map(|r| r.map_err(|e| io::Error::new(io::ErrorKind::Other, e)))
+        .collect::<Result<Vec<i64>>>()?;
+    match ts.len() {
+        4 => Ok((ts[0]..=ts[1], ts[2]..=ts[3])),
+        _ => Err(io::Error::new(
+            io::ErrorKind::Other,
+            format!("invalid item: {}", s),
+        )),
+    }
 }
 
 pub fn fully_contained(r1: &RangeInclusive<i64>, r2: &RangeInclusive<i64>) -> bool {
