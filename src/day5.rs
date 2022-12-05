@@ -7,13 +7,27 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 /**
 Day #5, Part 1:
 */
-pub fn compute(p: &Path) -> Result<String> {
+pub fn compute1(p: &Path) -> Result<String> {
     let f = File::open(p)?;
     let mut lines = BufReader::new(f).lines();
     let mut stacks = parse_stacks(&mut lines)?;
     let moves = parse_moves(&mut lines)?;
     for mv in moves {
         stacks.apply(&mv)?;
+    }
+    Ok(stacks.read_top())
+}
+
+/**
+Day #5, Part 2:
+*/
+pub fn compute2(p: &Path) -> Result<String> {
+    let f = File::open(p)?;
+    let mut lines = BufReader::new(f).lines();
+    let mut stacks = parse_stacks(&mut lines)?;
+    let moves = parse_moves(&mut lines)?;
+    for mv in moves {
+        stacks.apply2(&mv)?;
     }
     Ok(stacks.read_top())
 }
@@ -36,6 +50,21 @@ impl Stacks {
             let v = self.stacks[m.from]
                 .pop()
                 .ok_or_else(|| format!("invalid move: {:?}", m))?;
+            self.stacks[m.to].push(v);
+        }
+        Ok(())
+    }
+
+    pub fn apply2(&mut self, m: &Move) -> Result<()> {
+        let mut tmp = Vec::new();
+        for _ in 0..m.nbr {
+            let v = self.stacks[m.from]
+                .pop()
+                .ok_or_else(|| format!("invalid move: {:?}", m))?;
+            tmp.push(v);
+        }
+        for _ in 0..m.nbr {
+            let v = tmp.pop().ok_or_else(|| format!("invalid move: {:?}", m))?;
             self.stacks[m.to].push(v);
         }
         Ok(())
@@ -112,14 +141,20 @@ mod tests {
         use std::path::Path;
 
         assert_eq!(
-            compute(Path::new("src/day5/example.txt")).unwrap(),
+            compute1(Path::new("src/day5/example.txt")).unwrap(),
             "CMZ".to_string()
         );
         assert_eq!(
-            compute(Path::new("src/day5/input.txt")).unwrap(),
+            compute1(Path::new("src/day5/input.txt")).unwrap(),
             "PSNRGBTFT".to_string()
         );
-        // assert_eq!(compute(Path::new("src/day5/example.txt")).unwrap(), 0);
-        // assert_eq!(compute(Path::new("src/day5/input.txt")).unwrap(), 0);
+        assert_eq!(
+            compute2(Path::new("src/day5/example.txt")).unwrap(),
+            "MCD".to_string()
+        );
+        assert_eq!(
+            compute2(Path::new("src/day5/input.txt")).unwrap(),
+            "BNTZFPMMW".to_string()
+        );
     }
 }
