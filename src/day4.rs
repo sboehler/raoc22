@@ -6,17 +6,6 @@ use std::path::Path;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-/**
-Day #4, Part 1:
-```
-use raoc22::day4::{compute, overlap, fully_contained};
-use std::path::Path;
-assert_eq!(compute(Path::new("src/day4/example.txt"), fully_contained).unwrap(), 2);
-assert_eq!(compute(Path::new("src/day4/input.txt"), fully_contained).unwrap(), 547);
-assert_eq!(compute(Path::new("src/day4/example.txt"), overlap).unwrap(), 4);
-assert_eq!(compute(Path::new("src/day4/input.txt"), overlap).unwrap(), 843);
-```
-*/
 pub fn compute<F>(p: &Path, pred: F) -> Result<i64>
 where
     F: Fn(&(RangeInclusive<i64>, RangeInclusive<i64>)) -> bool,
@@ -60,4 +49,39 @@ pub fn fully_contained(r: &(RangeInclusive<i64>, RangeInclusive<i64>)) -> bool {
 
 pub fn overlap(r: &(RangeInclusive<i64>, RangeInclusive<i64>)) -> bool {
     return max(r.0.start(), r.1.start()) <= min(r.0.end(), r.1.end());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn day4_part1_example() {
+        assert_eq!(
+            compute(Path::new("src/day4/example.txt"), fully_contained).unwrap(),
+            2
+        );
+    }
+    #[test]
+    fn day4_part1_input() {
+        assert_eq!(
+            compute(Path::new("src/day4/input.txt"), fully_contained).unwrap(),
+            547
+        );
+    }
+    #[test]
+    fn day4_part2_example() {
+        assert_eq!(
+            compute(Path::new("src/day4/example.txt"), overlap).unwrap(),
+            4
+        );
+    }
+    #[test]
+    fn day4_part2_input() {
+        assert_eq!(
+            compute(Path::new("src/day4/input.txt"), overlap).unwrap(),
+            843
+        );
+    }
 }

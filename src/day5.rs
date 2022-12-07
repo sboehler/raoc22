@@ -4,9 +4,6 @@ use std::path::Path;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-/**
-Day #5, Part 1:
-*/
 pub fn compute1(p: &Path) -> Result<String> {
     let f = File::open(p)?;
     let mut lines = BufReader::new(f).lines();
@@ -18,9 +15,6 @@ pub fn compute1(p: &Path) -> Result<String> {
     Ok(stacks.read_top())
 }
 
-/**
-Day #5, Part 2:
-*/
 pub fn compute2(p: &Path) -> Result<String> {
     let f = File::open(p)?;
     let mut lines = BufReader::new(f).lines();
@@ -135,23 +129,32 @@ fn parse_moves(ls: &mut std::io::Lines<BufReader<File>>) -> Result<Vec<Move>> {
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn test_day5() {
-        use super::*;
-        use std::path::Path;
+    use super::*;
+    use std::path::Path;
 
+    #[test]
+    fn day5_part1_example() {
         assert_eq!(
             compute1(Path::new("src/day5/example.txt")).unwrap(),
             "CMZ".to_string()
         );
+    }
+    #[test]
+    fn day5_part1_input() {
         assert_eq!(
             compute1(Path::new("src/day5/input.txt")).unwrap(),
             "PSNRGBTFT".to_string()
         );
+    }
+    #[test]
+    fn day5_part2_example() {
         assert_eq!(
             compute2(Path::new("src/day5/example.txt")).unwrap(),
             "MCD".to_string()
         );
+    }
+    #[test]
+    fn day5_part2_input() {
         assert_eq!(
             compute2(Path::new("src/day5/input.txt")).unwrap(),
             "BNTZFPMMW".to_string()

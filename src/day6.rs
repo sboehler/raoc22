@@ -28,7 +28,7 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn test_day5_part1_examples() {
+    fn day6_part1_example() {
         let tests = vec![
             ("mjqjpqmgbljsphdztnvjfqwrcgsmlb", Some(7)),
             ("bvwbjplbgvbhsrlpgdmjqwftvncz", Some(5)),
@@ -42,13 +42,13 @@ mod tests {
     }
 
     #[test]
-    fn test_day5_part1() {
+    fn day6_part1_input() {
         let s = std::fs::read_to_string(Path::new("src/day6/input.txt")).unwrap();
         assert_eq!(find_marker(&s, 4), Some(1651),);
     }
 
     #[test]
-    fn test_day5_part2_examples() {
+    fn day6_part2_example() {
         let tests = vec![
             ("mjqjpqmgbljsphdztnvjfqwrcgsmlb", Some(19)),
             ("bvwbjplbgvbhsrlpgdmjqwftvncz", Some(23)),
@@ -62,7 +62,7 @@ mod tests {
     }
 
     #[test]
-    fn test_day5_part2() {
+    fn day6_part2_input() {
         let s = std::fs::read_to_string(Path::new("src/day6/input.txt")).unwrap();
         assert_eq!(find_marker(&s, 14), Some(3837),);
     }

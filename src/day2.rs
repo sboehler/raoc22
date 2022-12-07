@@ -5,17 +5,6 @@ use std::path::Path;
 
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
-/**
-Day #2
-```
-use raoc22::day2::{compute, decode1, decode2};
-use std::path::Path;
-assert_eq!(compute(Path::new("src/day2/example.txt"), decode1).unwrap(), 15);
-assert_eq!(compute(Path::new("src/day2/input.txt"), decode1).unwrap(), 8392);
-assert_eq!(compute(Path::new("src/day2/example.txt"), decode2).unwrap(), 12);
-assert_eq!(compute(Path::new("src/day2/input.txt"), decode2).unwrap(), 10116);
-```
-*/
 pub fn compute<F>(p: &Path, decode: F) -> Result<i64>
 where
     F: Fn(&str, &str) -> Result<i64>,
@@ -90,5 +79,40 @@ impl Outcome {
             "Z" => Ok(Outcome::Win),
             _ => Err(format!("invalid outcome: {}", s).into()),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn day2_part1_example() {
+        assert_eq!(
+            compute(Path::new("src/day2/example.txt"), decode1).unwrap(),
+            15
+        );
+    }
+    #[test]
+    fn day2_part1_input() {
+        assert_eq!(
+            compute(Path::new("src/day2/input.txt"), decode1).unwrap(),
+            8392
+        );
+    }
+    #[test]
+    fn day2_part2_example() {
+        assert_eq!(
+            compute(Path::new("src/day2/example.txt"), decode2).unwrap(),
+            12
+        );
+    }
+    #[test]
+    fn day2_part2_input() {
+        assert_eq!(
+            compute(Path::new("src/day2/input.txt"), decode2).unwrap(),
+            10116
+        );
     }
 }

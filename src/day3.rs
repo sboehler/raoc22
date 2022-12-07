@@ -7,15 +7,6 @@ use std::{
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-/**
-Day #3, Part 1:
-```
-use raoc22::day3::compute1;
-use std::path::Path;
-assert_eq!(compute1(Path::new("src/day3/example.txt")).unwrap(), 157);
-assert_eq!(compute1(Path::new("src/day3/input.txt")).unwrap(), 7831);
-```
-*/
 pub fn compute1(p: &Path) -> Result<i64> {
     let f = File::open(p)?;
     let lines = BufReader::new(f).lines();
@@ -30,15 +21,6 @@ pub fn compute1(p: &Path) -> Result<i64> {
     Ok(res)
 }
 
-/**
-Day #3, Part 2:
-```
-use raoc22::day3::compute2;
-use std::path::Path;
-assert_eq!(compute2(Path::new("src/day3/example.txt")).unwrap(), 70);
-assert_eq!(compute2(Path::new("src/day3/input.txt")).unwrap(), 2683);
-```
- */
 pub fn compute2(p: &Path) -> Result<i64> {
     let f = File::open(p)?;
     let mut lines = BufReader::new(f).lines();
@@ -67,5 +49,28 @@ fn score(c: &char) -> i64 {
         65..=90 => v - 38,
         97..=122 => v - 96,
         _ => 0,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn day3_part1_example() {
+        assert_eq!(compute1(Path::new("src/day3/example.txt")).unwrap(), 157);
+    }
+    #[test]
+    fn day3_part1_input() {
+        assert_eq!(compute1(Path::new("src/day3/input.txt")).unwrap(), 7831);
+    }
+    #[test]
+    fn day3_part2_example() {
+        assert_eq!(compute2(Path::new("src/day3/example.txt")).unwrap(), 70);
+    }
+    #[test]
+    fn day3_part2_input() {
+        assert_eq!(compute2(Path::new("src/day3/input.txt")).unwrap(), 2683);
     }
 }

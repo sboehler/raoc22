@@ -110,25 +110,25 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn test_day7_part1_example() {
+    fn day7_part1_example() {
         let s = Path::new("src/day7/example.txt");
         assert_eq!(compute1(&s).unwrap(), 95437)
     }
 
     #[test]
-    fn test_day7_part1_input() {
+    fn day7_part1_input() {
         let s = Path::new("src/day7/input.txt");
         assert_eq!(compute1(&s).unwrap(), 1743217)
     }
 
     #[test]
-    fn test_day7_part2_example() {
+    fn day7_part2_example() {
         let s = Path::new("src/day7/example.txt");
         assert_eq!(compute2(&s).unwrap(), 24933642)
     }
 
     #[test]
-    fn test_day7_part2_input() {
+    fn day7_part2_input() {
         let s = Path::new("src/day7/input.txt");
         assert_eq!(compute2(&s).unwrap(), 8319096)
     }
