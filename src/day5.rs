@@ -40,35 +40,23 @@ struct Stacks {
 
 impl Stacks {
     pub fn new(n: usize) -> Self {
-        let mut stacks = Vec::new();
-        for _ in 0..n {
-            stacks.push(Vec::new())
+        Stacks {
+            stacks: (0..n).into_iter().map(|_| Vec::new()).collect(),
         }
-        Stacks { stacks: stacks }
     }
 
     pub fn apply(&mut self, m: &Move) -> Result<()> {
-        for _ in 0..m.nbr {
-            let v = self.stacks[m.from]
-                .pop()
-                .ok_or_else(|| format!("invalid move: {:?}", m))?;
-            self.stacks[m.to].push(v);
-        }
+        let src = &mut self.stacks[m.from];
+        let mut v = src.split_off(src.len() - m.nbr);
+        v.reverse();
+        self.stacks[m.to].append(&mut v);
         Ok(())
     }
 
     pub fn apply2(&mut self, m: &Move) -> Result<()> {
-        let mut tmp = Vec::new();
-        for _ in 0..m.nbr {
-            let v = self.stacks[m.from]
-                .pop()
-                .ok_or_else(|| format!("invalid move: {:?}", m))?;
-            tmp.push(v);
-        }
-        for _ in 0..m.nbr {
-            let v = tmp.pop().ok_or_else(|| format!("invalid move: {:?}", m))?;
-            self.stacks[m.to].push(v);
-        }
+        let src = &mut self.stacks[m.from];
+        let mut v = src.split_off(src.len() - m.nbr);
+        self.stacks[m.to].append(&mut v);
         Ok(())
     }
 
@@ -88,15 +76,16 @@ struct Move {
 }
 
 fn parse_stacks(ls: &mut std::io::Lines<BufReader<File>>) -> Result<Stacks> {
-    let mut lines = Vec::new();
-    for line in ls {
-        let ln = line?;
-        if ln.is_empty() {
-            break;
-        }
-        lines.push(ln)
-    }
-    lines.pop();
+    let lines = ls
+        .take_while(|res| {
+            if let Ok(s) = res {
+                !s.is_empty()
+            } else {
+                false
+            }
+        })
+        .map(|res| res.map_err(io::Error::into))
+        .collect::<Result<Vec<_>>>()?;
     let line_length = lines
         .iter()
         .map(String::len)
@@ -105,15 +94,15 @@ fn parse_stacks(ls: &mut std::io::Lines<BufReader<File>>) -> Result<Stacks> {
     let nbr_stacks = (line_length + 1) / 4;
     let mut res = Stacks::new(nbr_stacks);
     let positions = (0..nbr_stacks).map(|i| 4 * i + 1).collect::<Vec<_>>();
-    for line in lines.iter().rev() {
+    lines.iter().rev().for_each(|line| {
         let bs = line.as_bytes();
-        for (i, pos) in positions.iter().enumerate() {
-            let ch = bs[*pos] as char;
-            if ch != ' ' {
-                res.stacks[i].push(ch)
-            }
-        }
-    }
+        positions
+            .iter()
+            .map(|pos| bs[*pos] as char)
+            .enumerate()
+            .filter(|(_, ch)| *ch != ' ')
+            .for_each(|(i, ch)| res.stacks[i].push(ch))
+    });
     Ok(res)
 }
 
