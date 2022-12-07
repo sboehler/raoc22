@@ -77,12 +77,9 @@ struct Move {
 
 fn parse_stacks(ls: &mut std::io::Lines<BufReader<File>>) -> Result<Stacks> {
     let lines = ls
-        .take_while(|res| {
-            if let Ok(s) = res {
-                !s.is_empty()
-            } else {
-                false
-            }
+        .take_while(|res| match res {
+            Ok(s) => !s.is_empty(),
+            _ => true,
         })
         .map(|res| res.map_err(io::Error::into))
         .collect::<Result<Vec<_>>>()?;
