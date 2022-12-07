@@ -9,11 +9,15 @@ use Cmd::*;
 Part 1:
 */
 pub fn compute1(p: &Path) -> Result<usize> {
-    let f = File::open(p)?;
-    let cmds: Vec<Cmd> = BufReader::new(f)
-        .lines()
-        .map(|res| res.map_err(io::Error::into).and_then(|s| Cmd::parse(&s)))
-        .collect::<Result<_>>()?;
+    let cmds: Vec<Cmd> = File::open(p)
+        .map_err(io::Error::into)
+        .map(BufReader::new)
+        .map(BufRead::lines)
+        .and_then(|lines| {
+            lines
+                .map(|res| res.map_err(io::Error::into).and_then(|s| Cmd::parse(&s)))
+                .collect()
+        })?;
     let mut sizes = HashMap::new();
     let mut path = Vec::new();
     traverse(&mut cmds.iter(), &mut path, &mut sizes);
@@ -24,10 +28,15 @@ pub fn compute1(p: &Path) -> Result<usize> {
 Part 2:
 */
 pub fn compute2(p: &Path) -> Result<usize> {
-    let cmds: Vec<Cmd> = BufReader::new(File::open(p)?)
-        .lines()
-        .map(|res| res.map_err(io::Error::into).and_then(|s| Cmd::parse(&s)))
-        .collect::<Result<_>>()?;
+    let cmds: Vec<Cmd> = File::open(p)
+        .map_err(io::Error::into)
+        .map(BufReader::new)
+        .map(BufRead::lines)
+        .and_then(|lines| {
+            lines
+                .map(|res| res.map_err(io::Error::into).and_then(|s| Cmd::parse(&s)))
+                .collect()
+        })?;
     let mut path = Vec::new();
     let mut sizes = HashMap::new();
     let space_used = traverse(&mut cmds.iter(), &mut path, &mut sizes);
