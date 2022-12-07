@@ -1,27 +1,24 @@
-use std::{cmp::min, collections::VecDeque};
+use std::collections::VecDeque;
 
 pub fn find_marker(s: &str, n: usize) -> Option<usize> {
-    let mut window = VecDeque::with_capacity(n);
+    let mut window: VecDeque<Item> = VecDeque::with_capacity(n);
     for (i, ch) in s.chars().enumerate() {
-        let mut has_conflict = false;
-        window.push_front(Item {
+        let head = Item {
             char: ch,
-            conflict: n,
-        });
-        for offset in (0..min(n, window.len())).rev() {
-            if offset + window[offset].conflict < n {
-                has_conflict = true;
-            }
-            if offset > 0 && window[offset].char == ch {
-                window[0].conflict = offset
-            }
+            conflict: window.iter().position(|item| item.char == ch).unwrap_or(n) + 1,
+        };
+        window.push_front(head);
+        if i < n {
+            continue;
         }
-        if i >= n {
-            if !has_conflict {
-                return Some(i + 1);
-            }
-            window.pop_back();
+        if !window
+            .iter()
+            .enumerate()
+            .any(|(offset, item)| item.conflict + offset < n)
+        {
+            return Some(i + 1);
         }
+        window.pop_back();
     }
     None
 }
