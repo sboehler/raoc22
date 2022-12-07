@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 use std::path::Path;
@@ -11,48 +10,35 @@ Part 1:
 */
 pub fn compute1(p: &Path) -> Result<usize> {
     let f = File::open(p)?;
-    let commands: Vec<Cmd> = BufReader::new(f)
+    let cmds: Vec<Cmd> = BufReader::new(f)
         .lines()
-        .map(|res| res.map_err(dyn_err).and_then(|s| Cmd::parse(&s)))
+        .map(|res| res.map_err(io::Error::into).and_then(|s| Cmd::parse(&s)))
         .collect::<Result<_>>()?;
-    let mut cmds = commands.iter();
     let mut sizes = HashMap::new();
     let mut path = Vec::new();
-    traverse(&mut cmds, &mut path, &mut sizes);
-    let mut total = 0;
-    for (_, v) in sizes {
-        if v <= 100000 {
-            total += v
-        }
-    }
-    Ok(total)
+    traverse(&mut cmds.iter(), &mut path, &mut sizes);
+    Ok(sizes.values().filter(|v| **v <= 100000).sum())
 }
 
 /**
 Part 2:
 */
 pub fn compute2(p: &Path) -> Result<usize> {
-    let commands: Vec<Cmd> = BufReader::new(File::open(p)?)
+    let cmds: Vec<Cmd> = BufReader::new(File::open(p)?)
         .lines()
-        .map(|res| res.map_err(dyn_err).and_then(|s| Cmd::parse(&s)))
+        .map(|res| res.map_err(io::Error::into).and_then(|s| Cmd::parse(&s)))
         .collect::<Result<_>>()?;
     let mut path = Vec::new();
     let mut sizes = HashMap::new();
-    let space_used = traverse(&mut commands.iter(), &mut path, &mut sizes);
+    let space_used = traverse(&mut cmds.iter(), &mut path, &mut sizes);
     let capacity = 70000000;
     let reserved = 30000000;
     let required = space_used + reserved - capacity;
-    let total = *sizes
+    Ok(*sizes
         .values()
         .filter(|v| **v >= required)
         .min()
-        .ok_or_else(|| "no directory found")?;
-    Ok(total)
-}
-
-fn dyn_err(err: io::Error) -> Box<dyn Error> {
-    let dyn_err: Box<dyn Error> = Box::new(err);
-    dyn_err
+        .ok_or_else(|| "no directory found")?)
 }
 
 fn traverse<'a, I>(
