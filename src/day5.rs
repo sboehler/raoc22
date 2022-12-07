@@ -118,21 +118,20 @@ fn parse_stacks(ls: &mut std::io::Lines<BufReader<File>>) -> Result<Stacks> {
 }
 
 fn parse_moves(ls: &mut std::io::Lines<BufReader<File>>) -> Result<Vec<Move>> {
-    let mut res = Vec::new();
-    for line in ls {
-        let ln = line?;
-        let tokens = ln.split_whitespace().collect::<Vec<_>>();
-        if tokens.len() != 6 {
-            return Err(format!("invalid line: {}", ln).into());
-        }
-        let m = Move {
-            nbr: tokens[1].parse::<usize>()?,
-            from: tokens[3].parse::<usize>()? - 1,
-            to: tokens[5].parse::<usize>()? - 1,
-        };
-        res.push(m)
-    }
-    Ok(res)
+    ls.map(|line| {
+        line.map_err(io::Error::into).and_then(|s| {
+            let ss = s.split_whitespace().collect::<Vec<_>>();
+            match ss.as_slice() {
+                &["move", nbr, "from", from, "to", to] => Ok(Move {
+                    nbr: nbr.parse::<usize>()?,
+                    from: from.parse::<usize>()? - 1,
+                    to: to.parse::<usize>()? - 1,
+                }),
+                _ => Err(format!("invalid line: {:?}", ss).into()),
+            }
+        })
+    })
+    .collect()
 }
 
 #[cfg(test)]
