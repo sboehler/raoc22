@@ -22,8 +22,7 @@ pub fn compute1(p: &Path) -> Result<i64> {
 }
 
 pub fn compute2(p: &Path) -> Result<i64> {
-    let f = File::open(p)?;
-    let mut lines = BufReader::new(f).lines();
+    let mut lines = File::open(p).map(BufReader::new).map(BufRead::lines)?;
     let mut res = 0;
     while let Some(line) = lines.next() {
         if let (Some(s1), Some(s2)) = (lines.next(), lines.next()) {

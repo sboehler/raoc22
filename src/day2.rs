@@ -1,7 +1,7 @@
-use std::error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
+use std::{error, io};
 
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
@@ -9,16 +9,21 @@ pub fn compute<F>(p: &Path, decode: F) -> Result<i64>
 where
     F: Fn(&str, &str) -> Result<i64>,
 {
-    let f = File::open(p)?;
-    let mut res: i64 = 0;
-    for line in BufReader::new(f).lines() {
-        let s = line?;
-        res += match s.split_once(' ') {
-            Some((a, b)) => decode(a, b)?,
-            None => return Err(format!("invalid string: {}", s).into()),
-        }
-    }
-    Ok(res)
+    File::open(p)
+        .map_err(io::Error::into)
+        .map(BufReader::new)
+        .map(BufRead::lines)
+        .and_then(|lines| {
+            lines
+                .map(|line| {
+                    line.map_err(io::Error::into).and_then(|s| {
+                        s.split_once(' ')
+                            .ok_or_else(|| format!("invalid string: {}", s).into())
+                            .and_then(|(a, b)| decode(a, b))
+                    })
+                })
+                .sum()
+        })
 }
 
 pub fn decode1(s1: &str, s2: &str) -> Result<i64> {
