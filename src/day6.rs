@@ -1,20 +1,17 @@
 use std::collections::VecDeque;
 
 pub fn find_marker(s: &str, n: usize) -> Option<usize> {
-    let mut window: VecDeque<Item> = VecDeque::with_capacity(n);
-    for (i, ch) in s.chars().enumerate() {
-        let head = Item {
-            char: ch,
-            conflict: window.iter().position(|item| item.char == ch).unwrap_or(n) + 1,
-        };
-        window.push_front(head);
+    let mut window: VecDeque<Pos> = VecDeque::with_capacity(n);
+    for (i, char) in s.chars().enumerate() {
+        let conflict = window.iter().position(|pos| pos.char == char).unwrap_or(n) + 1;
+        window.push_front(Pos { char, conflict });
         if i < n {
             continue;
         }
-        if !window
+        if window
             .iter()
             .enumerate()
-            .any(|(offset, item)| item.conflict + offset < n)
+            .all(|(offset, pos)| pos.conflict + offset >= n)
         {
             return Some(i + 1);
         }
@@ -23,7 +20,7 @@ pub fn find_marker(s: &str, n: usize) -> Option<usize> {
     None
 }
 
-struct Item {
+struct Pos {
     pub char: char,
     pub conflict: usize,
 }
