@@ -5,18 +5,6 @@ use std::{io::BufReader, path::Path};
 
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
-/**
-Day #3, Parts 1 & 2:
-```
-use raoc22::day1::compute;
-use std::path::Path;
-
-assert_eq!(compute(Path::new("src/day1/example.txt"), 1).unwrap(), 24000);
-assert_eq!(compute(Path::new("src/day1/input.txt"), 1).unwrap(), 70116);
-assert_eq!(compute(Path::new("src/day1/example.txt"), 3).unwrap(), 45000);
-assert_eq!(compute(Path::new("src/day1/input.txt"), 3).unwrap(), 206582);
-```
-*/
 pub fn compute(p: &Path, n: usize) -> Result<i64> {
     let f = File::open(p)?;
     let lines = BufReader::new(f).lines();
@@ -52,5 +40,36 @@ impl Max {
     }
     pub fn sum(&self) -> i64 {
         self.max.iter().sum()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::compute;
+    use std::path::Path;
+
+    #[test]
+    fn day1_part1_example() {
+        assert_eq!(
+            compute(Path::new("src/day1/example.txt"), 1).unwrap(),
+            24000
+        );
+    }
+    #[test]
+    fn day1_part1_input() {
+        assert_eq!(compute(Path::new("src/day1/input.txt"), 1).unwrap(), 70116);
+    }
+
+    #[test]
+    fn day1_part2_example() {
+        assert_eq!(
+            compute(Path::new("src/day1/example.txt"), 3).unwrap(),
+            45000
+        );
+    }
+
+    #[test]
+    fn day1_part2_input() {
+        assert_eq!(compute(Path::new("src/day1/input.txt"), 3).unwrap(), 206582);
     }
 }
