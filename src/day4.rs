@@ -1,25 +1,28 @@
 use std::cmp::{max, min};
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{self, BufRead, BufReader};
 use std::ops::RangeInclusive;
 use std::path::Path;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-pub fn compute<F>(p: &Path, pred: F) -> Result<i64>
+pub fn compute<F>(p: &Path, pred: F) -> Result<usize>
 where
     F: Fn(&(RangeInclusive<i64>, RangeInclusive<i64>)) -> bool,
 {
-    let f = File::open(p)?;
-    let mut res: i64 = 0;
-    for line in BufReader::new(f).lines() {
-        let ln = line?;
-        let ranges = decode(&ln)?;
-        if pred(&ranges) {
-            res += 1
-        }
-    }
-    Ok(res)
+    File::open(p)
+        .map_err(io::Error::into)
+        .map(BufReader::new)
+        .map(BufRead::lines)
+        .and_then(|reader| {
+            reader
+                .map(|line| {
+                    line.map_err(io::Error::into)
+                        .and_then(|s| decode(&s))
+                        .map(|rs| pred(&rs) as usize)
+                })
+                .sum()
+        })
 }
 
 fn decode(s: &str) -> Result<(RangeInclusive<i64>, RangeInclusive<i64>)> {
