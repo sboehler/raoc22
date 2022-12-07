@@ -1,29 +1,37 @@
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{self, BufRead, BufReader};
 use std::path::Path;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub fn compute1(p: &Path) -> Result<String> {
-    let f = File::open(p)?;
-    let mut lines = BufReader::new(f).lines();
-    let mut stacks = parse_stacks(&mut lines)?;
-    let moves = parse_moves(&mut lines)?;
-    for mv in moves {
-        stacks.apply(&mv)?;
-    }
-    Ok(stacks.read_top())
+    File::open(p)
+        .map_err(io::Error::into)
+        .map(BufReader::new)
+        .map(BufRead::lines)
+        .and_then(|mut lines| {
+            let mut stacks = parse_stacks(&mut lines)?;
+            let moves = parse_moves(&mut lines)?;
+            for mv in moves {
+                stacks.apply(&mv)?
+            }
+            Ok(stacks.read_top())
+        })
 }
 
 pub fn compute2(p: &Path) -> Result<String> {
-    let f = File::open(p)?;
-    let mut lines = BufReader::new(f).lines();
-    let mut stacks = parse_stacks(&mut lines)?;
-    let moves = parse_moves(&mut lines)?;
-    for mv in moves {
-        stacks.apply2(&mv)?;
-    }
-    Ok(stacks.read_top())
+    File::open(p)
+        .map_err(io::Error::into)
+        .map(BufReader::new)
+        .map(BufRead::lines)
+        .and_then(|mut lines| {
+            let mut stacks = parse_stacks(&mut lines)?;
+            let moves = parse_moves(&mut lines)?;
+            for mv in moves {
+                stacks.apply2(&mv)?;
+            }
+            Ok(stacks.read_top())
+        })
 }
 
 struct Stacks {
