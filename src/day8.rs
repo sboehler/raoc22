@@ -3,7 +3,12 @@ use std::path::Path;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-pub fn compute1(p: &Path) -> Result<usize> {
+pub enum Part {
+    One,
+    Two,
+}
+
+pub fn compute(p: &Path, part: Part) -> Result<usize> {
     let s = fs::read_to_string(p)?;
     let width = s.bytes().position(|b| b == b'\n').unwrap_or(s.len());
     let trees = s
@@ -11,8 +16,10 @@ pub fn compute1(p: &Path) -> Result<usize> {
         .filter(|ch| *ch != '\n')
         .map(|ch| ch as isize - 48)
         .collect::<Vec<_>>();
-
-    Ok(part1(&trees, width))
+    match part {
+        Part::One => Ok(part1(&trees, width)),
+        Part::Two => Ok(part2(&trees, width)),
+    }
 }
 
 fn part1(trees: &[isize], width: usize) -> usize {
@@ -35,7 +42,7 @@ fn fill_visibility<I>(heights: &[isize], visible: &mut [bool], iter: I)
 where
     I: Iterator<Item = usize>,
 {
-    iter.fold(-1, |max, i| {
+    iter.fold(isize::MIN, |max, i| {
         if heights[i] > max {
             visible[i] = true;
             heights[i]
@@ -43,18 +50,6 @@ where
             max
         }
     });
-}
-
-pub fn compute2(p: &Path) -> Result<usize> {
-    let s = fs::read_to_string(p)?;
-    let width = s.bytes().position(|b| b == b'\n').unwrap_or(s.len());
-    let trees = s
-        .chars()
-        .filter(|ch| *ch != '\n')
-        .map(|ch| ch as isize - 48)
-        .collect::<Vec<_>>();
-
-    Ok(part2(&trees, width))
 }
 
 fn part2(trees: &[isize], width: usize) -> usize {
@@ -105,28 +100,28 @@ mod tests {
     #[test]
     fn day8_part1_example() {
         assert_eq!(
-            compute1(Path::new("src/inputs/day8_example.txt")).unwrap(),
+            compute(Path::new("src/inputs/day8_example.txt"), Part::One).unwrap(),
             21
         );
     }
     #[test]
     fn day8_part1_input() {
         assert_eq!(
-            compute1(Path::new("src/inputs/day8_input.txt")).unwrap(),
+            compute(Path::new("src/inputs/day8_input.txt"), Part::One).unwrap(),
             1789
         );
     }
     #[test]
     fn day8_part2_example() {
         assert_eq!(
-            compute2(Path::new("src/inputs/day8_example.txt")).unwrap(),
+            compute(Path::new("src/inputs/day8_example.txt"), Part::Two).unwrap(),
             8
         );
     }
     #[test]
     fn day8_part2_input() {
         assert_eq!(
-            compute2(Path::new("src/inputs/day8_input.txt")).unwrap(),
+            compute(Path::new("src/inputs/day8_input.txt"), Part::Two).unwrap(),
             314820
         );
     }
