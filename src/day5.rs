@@ -87,7 +87,7 @@ fn parse_stacks(ls: &mut std::io::Lines<BufReader<File>>) -> Result<Stacks> {
         .iter()
         .map(String::len)
         .max()
-        .ok_or_else(|| "no stack lines found")?;
+        .ok_or("no stack lines found")?;
     let nbr_stacks = (line_length + 1) / 4;
     let mut res = Stacks::new(nbr_stacks);
     let positions = (0..nbr_stacks).map(|i| 4 * i + 1).collect::<Vec<_>>();

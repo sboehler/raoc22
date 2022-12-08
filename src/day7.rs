@@ -47,7 +47,7 @@ pub fn compute2(p: &Path) -> Result<usize> {
         .values()
         .filter(|v| **v >= required)
         .min()
-        .ok_or_else(|| "no directory found")?)
+        .ok_or("no directory found")?)
 }
 
 fn traverse<'a, I>(
@@ -87,12 +87,12 @@ enum Cmd {
 impl Cmd {
     pub fn parse(s: &str) -> Result<Self> {
         let tokens = s.split_whitespace().into_iter().collect::<Vec<&str>>();
-        let cmd = match tokens.as_slice() {
-            &["$", "cd", ".."] => CdUp,
-            &["$", "cd", dir] => Cd(dir.into()),
-            &["$", "ls"] => Ls,
-            &["dir", name] => DirInfo(name.into()),
-            &[size, name] => FileInfo(name.into(), size.parse::<usize>()?),
+        let cmd = match *tokens.as_slice() {
+            ["$", "cd", ".."] => CdUp,
+            ["$", "cd", dir] => Cd(dir.into()),
+            ["$", "ls"] => Ls,
+            ["dir", name] => DirInfo(name.into()),
+            [size, name] => FileInfo(name.into(), size.parse::<usize>()?),
             _ => return Err(format!("invalid command: {}", s).into()),
         };
         Ok(cmd)
