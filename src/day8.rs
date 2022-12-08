@@ -1,43 +1,30 @@
-use std::fs::File;
-use std::io::{self, BufRead, BufReader};
+use std::fs::{self};
 use std::path::Path;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub fn compute1(p: &Path) -> Result<usize> {
-    let mut width = 0;
-    let trees1: Vec<Vec<Tree>> = File::open(p)
-        .map_err(io::Error::into)
-        .map(BufReader::new)
-        .map(BufRead::lines)
-        .and_then(|lines| {
-            lines
-                .map(|line| {
-                    line.map_err(io::Error::into).map(|s| {
-                        width = s.len();
-                        s.chars()
-                            .map(|ch| Tree {
-                                height: ch as isize - 48,
-                                visible: false,
-                            })
-                            .collect()
-                    })
-                })
-                .collect::<Result<Vec<_>>>()
-        })?;
+    let s = fs::read_to_string(p)?;
+    let width = s.bytes().position(|b| b == '\n' as u8).unwrap_or(s.len());
+    let mut trees = s
+        .chars()
+        .filter(|ch| *ch != '\n')
+        .map(|ch| Tree {
+            height: ch as isize - 48,
+            visible: false,
+        })
+        .collect::<Vec<Tree>>();
 
-    let height = trees1.len();
-    // todo: be smarter about creating this vector directly from the file.
-    let mut trees = trees1.into_iter().flatten().collect::<Vec<Tree>>();
-    let l = trees.len();
+    let height = trees.len() / width;
+    let len = trees.len();
 
-    for line_offset in (0..l).step_by(height) {
+    for line_offset in (0..len).step_by(height) {
         fill_visibility(&mut trees, line_offset..line_offset + width);
         fill_visibility(&mut trees, (line_offset..line_offset + width).rev())
     }
     for col_offset in 0..width {
-        fill_visibility(&mut trees, (col_offset..l).step_by(height));
-        fill_visibility(&mut trees, (col_offset..l).step_by(height).rev());
+        fill_visibility(&mut trees, (col_offset..len).step_by(height));
+        fill_visibility(&mut trees, (col_offset..len).step_by(height).rev());
     }
     Ok(trees.iter().filter(|t| t.visible).count())
 }
@@ -57,30 +44,18 @@ where
 }
 
 pub fn compute2(p: &Path) -> Result<usize> {
-    let mut width = 0;
-    let trees1: Vec<Vec<Tree>> = File::open(p)
-        .map_err(io::Error::into)
-        .map(BufReader::new)
-        .map(BufRead::lines)
-        .and_then(|lines| {
-            lines
-                .map(|line| {
-                    line.map_err(io::Error::into).map(|s| {
-                        width = s.len();
-                        s.chars()
-                            .map(|ch| Tree {
-                                height: ch as isize - 48,
-                                visible: false,
-                            })
-                            .collect()
-                    })
-                })
-                .collect::<Result<Vec<_>>>()
-        })?;
+    let s = fs::read_to_string(p)?;
+    let width = s.bytes().position(|b| b == '\n' as u8).unwrap_or(s.len());
+    let mut trees = s
+        .chars()
+        .filter(|ch| *ch != '\n')
+        .map(|ch| Tree {
+            height: ch as isize - 48,
+            visible: false,
+        })
+        .collect::<Vec<Tree>>();
 
-    let height = trees1.len();
-    // todo: be smarter about creating this vector directly from the file.
-    let mut trees = trees1.into_iter().flatten().collect::<Vec<Tree>>();
+    let height = trees.len() / width;
     Ok(determine_score(&mut trees, width, height))
 }
 
