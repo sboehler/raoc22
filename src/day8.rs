@@ -5,7 +5,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub fn compute1(p: &Path) -> Result<usize> {
     let s = fs::read_to_string(p)?;
-    let width = s.bytes().position(|b| b == '\n' as u8).unwrap_or(s.len());
+    let width = s.bytes().position(|b| b == b'\n').unwrap_or(s.len());
     let mut trees = s
         .chars()
         .filter(|ch| *ch != '\n')
@@ -29,7 +29,7 @@ pub fn compute1(p: &Path) -> Result<usize> {
     Ok(trees.iter().filter(|t| t.visible).count())
 }
 
-fn fill_visibility<I>(trees: &mut Vec<Tree>, iter: I)
+fn fill_visibility<I>(trees: &mut [Tree], iter: I)
 where
     I: Iterator<Item = usize>,
 {
@@ -45,7 +45,7 @@ where
 
 pub fn compute2(p: &Path) -> Result<usize> {
     let s = fs::read_to_string(p)?;
-    let width = s.bytes().position(|b| b == '\n' as u8).unwrap_or(s.len());
+    let width = s.bytes().position(|b| b == b'\n').unwrap_or(s.len());
     let mut trees = s
         .chars()
         .filter(|ch| *ch != '\n')
@@ -59,7 +59,7 @@ pub fn compute2(p: &Path) -> Result<usize> {
     Ok(determine_score(&mut trees, width, height))
 }
 
-fn determine_score(trees: &mut Vec<Tree>, width: usize, height: usize) -> usize {
+fn determine_score(trees: &mut [Tree], width: usize, height: usize) -> usize {
     let mut max = 0;
     for line in 1..height - 1 {
         let line_offset = line * height;
