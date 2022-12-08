@@ -61,8 +61,7 @@ fn part2(matrix: &Matrix<isize>) -> usize {
     (1..height - 1)
         .flat_map(|row| {
             (1..width - 1).map(move |col| {
-                let idx = row * height + col;
-                let h = matrix.values[idx];
+                let h = matrix.values[matrix.idx(row, col)];
                 let right = matrix
                     .row(row, col + 1, width)
                     .position(|i| matrix.values[i] >= h)
@@ -102,7 +101,11 @@ struct Matrix<T> {
 
 impl<T> Matrix<T> {
     fn height(&self) -> usize {
-        return self.values.len() / self.width;
+        self.values.len() / self.width
+    }
+
+    fn idx(&self, row: usize, col: usize) -> usize {
+        self.height() * row + col
     }
 
     fn col(
