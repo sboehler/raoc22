@@ -6,87 +6,86 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 pub fn compute1(p: &Path) -> Result<usize> {
     let s = fs::read_to_string(p)?;
     let width = s.bytes().position(|b| b == b'\n').unwrap_or(s.len());
-    let mut trees = s
+    let trees = s
         .chars()
         .filter(|ch| *ch != '\n')
-        .map(|ch| Tree {
-            height: ch as isize - 48,
-            visible: false,
-        })
-        .collect::<Vec<Tree>>();
+        .map(|ch| ch as isize - 48)
+        .collect::<Vec<_>>();
 
-    let height = trees.len() / width;
-    let len = trees.len();
-
-    for line_offset in (0..len).step_by(height) {
-        fill_visibility(&mut trees, line_offset..line_offset + width);
-        fill_visibility(&mut trees, (line_offset..line_offset + width).rev())
-    }
-    for col_offset in 0..width {
-        fill_visibility(&mut trees, (col_offset..len).step_by(height));
-        fill_visibility(&mut trees, (col_offset..len).step_by(height).rev());
-    }
-    Ok(trees.iter().filter(|t| t.visible).count())
+    Ok(part1(&trees, width))
 }
 
-fn fill_visibility<I>(trees: &mut [Tree], iter: I)
+fn part1(trees: &[isize], width: usize) -> usize {
+    let len = trees.len();
+    let height = trees.len() / width;
+    let mut visible = vec![false; trees.len()];
+
+    for line_idx in (0..len).step_by(height) {
+        fill_visibility(trees, &mut visible, line_idx..line_idx + width);
+        fill_visibility(trees, &mut visible, (line_idx..line_idx + width).rev())
+    }
+    for col_idx in 0..width {
+        fill_visibility(trees, &mut visible, (col_idx..len).step_by(height));
+        fill_visibility(trees, &mut visible, (col_idx..len).step_by(height).rev());
+    }
+    visible.iter().filter(|t| **t).count()
+}
+
+fn fill_visibility<I>(heights: &[isize], visible: &mut [bool], iter: I)
 where
     I: Iterator<Item = usize>,
 {
-    let mut h = -1;
-    for i in iter {
-        let mut tree = &mut trees[i];
-        if tree.height > h {
-            tree.visible = true;
-            h = tree.height;
+    iter.fold(-1, |max, i| {
+        if heights[i] > max {
+            visible[i] = true;
+            heights[i]
+        } else {
+            max
         }
-    }
+    });
 }
 
 pub fn compute2(p: &Path) -> Result<usize> {
     let s = fs::read_to_string(p)?;
     let width = s.bytes().position(|b| b == b'\n').unwrap_or(s.len());
-    let mut trees = s
+    let trees = s
         .chars()
         .filter(|ch| *ch != '\n')
-        .map(|ch| Tree {
-            height: ch as isize - 48,
-            visible: false,
-        })
-        .collect::<Vec<Tree>>();
+        .map(|ch| ch as isize - 48)
+        .collect::<Vec<_>>();
 
-    let height = trees.len() / width;
-    Ok(determine_score(&mut trees, width, height))
+    Ok(part2(&trees, width))
 }
 
-fn determine_score(trees: &mut [Tree], width: usize, height: usize) -> usize {
+fn part2(trees: &[isize], width: usize) -> usize {
+    let height = trees.len() / width;
     let mut max = 0;
     for line in 1..height - 1 {
         let line_offset = line * height;
         for col in 1..width - 1 {
             let idx = line * height + col;
-            let h = trees[idx].height;
+            let h = trees[idx];
             let right = (line_offset + col + 1..line_offset + width)
-                .position(|i| trees[i].height >= h)
+                .position(|i| trees[i] >= h)
                 .map(|i| i + 1)
                 .unwrap_or(width - col - 1);
 
             let left = (line_offset..line_offset + col)
                 .rev()
-                .position(|i| trees[i].height >= h)
+                .position(|i| trees[i] >= h)
                 .map(|i| i + 1)
                 .unwrap_or(col);
 
             let bottom = (idx + height..width * height)
                 .step_by(height)
-                .position(|i| trees[i].height >= h)
+                .position(|i| trees[i] >= h)
                 .map(|i| i + 1)
                 .unwrap_or(height - line - 1);
 
             let top = (col..idx)
                 .step_by(height)
                 .rev()
-                .position(|i| trees[i].height >= h)
+                .position(|i| trees[i] >= h)
                 .map(|i| i + 1)
                 .unwrap_or(line);
             let score = right * left * top * bottom;
@@ -96,12 +95,6 @@ fn determine_score(trees: &mut [Tree], width: usize, height: usize) -> usize {
         }
     }
     max
-}
-
-#[derive(Clone, Copy, Debug)]
-struct Tree {
-    pub height: isize,
-    pub visible: bool,
 }
 
 #[cfg(test)]
