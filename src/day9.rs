@@ -5,7 +5,7 @@ use std::path::Path;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-pub fn compute(p: &Path) -> Result<usize> {
+pub fn compute(p: &Path, l: usize) -> Result<usize> {
     let mvs: Vec<Move> = File::open(p)
         .map_err(io::Error::into)
         .map(BufReader::new)
@@ -20,14 +20,13 @@ pub fn compute(p: &Path) -> Result<usize> {
         .collect::<Vec<_>>();
 
     let mut pos = Pos {
-        head: Point(0, 0),
-        tail: Point(0, 0),
+        rope: vec![Point(0, 0); l],
     };
     let mut set = HashSet::new();
-    set.insert(pos.tail);
+    set.insert(Point(0, 0));
     for mv in mvs {
-        pos = pos.apply(mv);
-        set.insert(pos.tail);
+        pos.apply(mv);
+        set.insert(pos.rope[pos.rope.len() - 1]);
     }
     Ok(set.len())
 }
@@ -43,30 +42,30 @@ enum Move {
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 struct Point(isize, isize);
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
+#[derive(Clone, Hash, PartialEq, Eq, Debug)]
 struct Pos {
-    pub head: Point,
-    pub tail: Point,
+    pub rope: Vec<Point>,
 }
 
 impl Pos {
-    pub fn apply(self, mv: Move) -> Pos {
-        let head = match mv {
-            Move::Left => Point(self.head.0 - 1, self.head.1),
-            Move::Right => Point(self.head.0 + 1, self.head.1),
-            Move::Up => Point(self.head.0, self.head.1 + 1),
-            Move::Down => Point(self.head.0, self.head.1 - 1),
+    pub fn apply(&mut self, mv: Move) {
+        let head = &mut self.rope[0];
+
+        *head = match mv {
+            Move::Left => Point(head.0 - 1, head.1),
+            Move::Right => Point(head.0 + 1, head.1),
+            Move::Up => Point(head.0, head.1 + 1),
+            Move::Down => Point(head.0, head.1 - 1),
         };
-        let dx = head.0 - self.tail.0;
-        let dy = head.1 - self.tail.1;
-        if (dx * dx + dy * dy) <= 2 {
-            Pos {
-                head,
-                tail: self.tail,
+        let mut head = self.rope[0];
+        for mut tail in self.rope.iter_mut().skip(1) {
+            let dx = head.0 - tail.0;
+            let dy = head.1 - tail.1;
+            if (dx * dx + dy * dy) > 2 {
+                tail.0 += dx.signum();
+                tail.1 += dy.signum();
             }
-        } else {
-            let tail = Point(self.tail.0 + dx.signum(), self.tail.1 + dy.signum());
-            Pos { head, tail }
+            head = *tail
         }
     }
 }
@@ -95,15 +94,29 @@ mod tests {
     #[test]
     fn day9_part1_example() {
         assert_eq!(
-            compute(Path::new("src/inputs/day9_example.txt")).unwrap(),
+            compute(Path::new("src/inputs/day9_example.txt"), 2).unwrap(),
             13
         );
     }
     #[test]
     fn day9_part1_input() {
         assert_eq!(
-            compute(Path::new("src/inputs/day9_input.txt")).unwrap(),
+            compute(Path::new("src/inputs/day9_input.txt"), 2).unwrap(),
             6236
+        );
+    }
+    #[test]
+    fn day9_part2_example() {
+        assert_eq!(
+            compute(Path::new("src/inputs/day9_example.txt"), 10).unwrap(),
+            1
+        );
+    }
+    #[test]
+    fn day9_part2_input() {
+        assert_eq!(
+            compute(Path::new("src/inputs/day9_input.txt"), 10).unwrap(),
+            2449
         );
     }
 }
