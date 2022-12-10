@@ -127,30 +127,30 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn day5_part1_example() {
+    fn day05_part1_example() {
         assert_eq!(
-            compute1(Path::new("src/day5/example.txt")).unwrap(),
+            compute1(Path::new("src/inputs/day05_example.txt")).unwrap(),
             "CMZ".to_string()
         );
     }
     #[test]
-    fn day5_part1_input() {
+    fn day05_part1_input() {
         assert_eq!(
-            compute1(Path::new("src/day5/input.txt")).unwrap(),
+            compute1(Path::new("src/inputs/day05_input.txt")).unwrap(),
             "PSNRGBTFT".to_string()
         );
     }
     #[test]
-    fn day5_part2_example() {
+    fn day05_part2_example() {
         assert_eq!(
-            compute2(Path::new("src/day5/example.txt")).unwrap(),
+            compute2(Path::new("src/inputs/day05_example.txt")).unwrap(),
             "MCD".to_string()
         );
     }
     #[test]
-    fn day5_part2_input() {
+    fn day05_part2_input() {
         assert_eq!(
-            compute2(Path::new("src/day5/input.txt")).unwrap(),
+            compute2(Path::new("src/inputs/day05_input.txt")).unwrap(),
             "BNTZFPMMW".to_string()
         );
     }

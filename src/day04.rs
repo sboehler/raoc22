@@ -60,30 +60,30 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn day4_part1_example() {
+    fn day04_part1_example() {
         assert_eq!(
-            compute(Path::new("src/day4/example.txt"), fully_contained).unwrap(),
+            compute(Path::new("src/inputs/day04_example.txt"), fully_contained).unwrap(),
             2
         );
     }
     #[test]
-    fn day4_part1_input() {
+    fn day04_part1_input() {
         assert_eq!(
-            compute(Path::new("src/day4/input.txt"), fully_contained).unwrap(),
+            compute(Path::new("src/inputs/day04_input.txt"), fully_contained).unwrap(),
             547
         );
     }
     #[test]
-    fn day4_part2_example() {
+    fn day04_part2_example() {
         assert_eq!(
-            compute(Path::new("src/day4/example.txt"), overlap).unwrap(),
+            compute(Path::new("src/inputs/day04_example.txt"), overlap).unwrap(),
             4
         );
     }
     #[test]
-    fn day4_part2_input() {
+    fn day04_part2_input() {
         assert_eq!(
-            compute(Path::new("src/day4/input.txt"), overlap).unwrap(),
+            compute(Path::new("src/inputs/day04_input.txt"), overlap).unwrap(),
             843
         );
     }

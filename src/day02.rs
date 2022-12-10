@@ -93,30 +93,30 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn day2_part1_example() {
+    fn day02_part1_example() {
         assert_eq!(
-            compute(Path::new("src/day2/example.txt"), decode1).unwrap(),
+            compute(Path::new("src/inputs/day02_example.txt"), decode1).unwrap(),
             15
         );
     }
     #[test]
-    fn day2_part1_input() {
+    fn day02_part1_input() {
         assert_eq!(
-            compute(Path::new("src/day2/input.txt"), decode1).unwrap(),
+            compute(Path::new("src/inputs/day02_input.txt"), decode1).unwrap(),
             8392
         );
     }
     #[test]
-    fn day2_part2_example() {
+    fn day02_part2_example() {
         assert_eq!(
-            compute(Path::new("src/day2/example.txt"), decode2).unwrap(),
+            compute(Path::new("src/inputs/day02_example.txt"), decode2).unwrap(),
             12
         );
     }
     #[test]
-    fn day2_part2_input() {
+    fn day02_part2_input() {
         assert_eq!(
-            compute(Path::new("src/day2/input.txt"), decode2).unwrap(),
+            compute(Path::new("src/inputs/day02_input.txt"), decode2).unwrap(),
             10116
         );
     }

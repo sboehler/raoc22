@@ -105,26 +105,26 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn day7_part1_example() {
-        let s = Path::new("src/day7/example.txt");
+    fn day07_part1_example() {
+        let s = Path::new("src/inputs/day07_example.txt");
         assert_eq!(compute1(&s).unwrap(), 95437)
     }
 
     #[test]
-    fn day7_part1_input() {
-        let s = Path::new("src/day7/input.txt");
+    fn day07_part1_input() {
+        let s = Path::new("src/inputs/day07_input.txt");
         assert_eq!(compute1(&s).unwrap(), 1743217)
     }
 
     #[test]
-    fn day7_part2_example() {
-        let s = Path::new("src/day7/example.txt");
+    fn day07_part2_example() {
+        let s = Path::new("src/inputs/day07_example.txt");
         assert_eq!(compute2(&s).unwrap(), 24933642)
     }
 
     #[test]
-    fn day7_part2_input() {
-        let s = Path::new("src/day7/input.txt");
+    fn day07_part2_input() {
+        let s = Path::new("src/inputs/day07_input.txt");
         assert_eq!(compute2(&s).unwrap(), 8319096)
     }
 }

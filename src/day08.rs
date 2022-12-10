@@ -135,30 +135,30 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn day8_part1_example() {
+    fn day08_part1_example() {
         assert_eq!(
-            compute(Path::new("src/inputs/day8_example.txt"), Part::One).unwrap(),
+            compute(Path::new("src/inputs/day08_example.txt"), Part::One).unwrap(),
             21
         );
     }
     #[test]
-    fn day8_part1_input() {
+    fn day08_part1_input() {
         assert_eq!(
-            compute(Path::new("src/inputs/day8_input.txt"), Part::One).unwrap(),
+            compute(Path::new("src/inputs/day08_input.txt"), Part::One).unwrap(),
             1789
         );
     }
     #[test]
-    fn day8_part2_example() {
+    fn day08_part2_example() {
         assert_eq!(
-            compute(Path::new("src/inputs/day8_example.txt"), Part::Two).unwrap(),
+            compute(Path::new("src/inputs/day08_example.txt"), Part::Two).unwrap(),
             8
         );
     }
     #[test]
-    fn day8_part2_input() {
+    fn day08_part2_input() {
         assert_eq!(
-            compute(Path::new("src/inputs/day8_input.txt"), Part::Two).unwrap(),
+            compute(Path::new("src/inputs/day08_input.txt"), Part::Two).unwrap(),
             314820
         );
     }
