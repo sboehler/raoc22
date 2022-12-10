@@ -28,6 +28,23 @@ pub fn compute1(p: &Path) -> Result<isize> {
         .sum::<isize>())
 }
 
+pub fn compute2(p: &Path) -> Result<String> {
+    let instrs: Vec<Inst> = File::open(p)
+        .map_err(io::Error::into)
+        .map(BufReader::new)
+        .map(BufRead::lines)
+        .and_then(|reader| {
+            reader
+                .map(|line| line.map_err(io::Error::into).and_then(|s| parse(&s)))
+                .collect::<Result<Vec<_>>>()
+        })?;
+    let mut cpu = CPU::new(instrs);
+    while cpu.cycle < 240 {
+        cpu.tick();
+    }
+    Ok(cpu.display)
+}
+
 #[derive(Clone, Copy, Debug)]
 enum Inst {
     AddX(isize),
@@ -42,6 +59,8 @@ struct CPU {
     pc: usize,
     x: isize,
     cur: Option<Inst>,
+
+    display: String,
 }
 
 impl CPU {
@@ -53,6 +72,7 @@ impl CPU {
             cur: None,
             pc: 0,
             x: 1,
+            display: String::new(),
         }
     }
 
@@ -73,6 +93,16 @@ impl CPU {
             },
         }
         self.cycle += 1;
+
+        let pos = (self.cycle as isize - 1) % 40;
+        if (pos - self.x).abs() <= 1 {
+            self.display.push('#');
+        } else {
+            self.display.push('.')
+        }
+        if pos % 40 == 39 {
+            self.display.push('\n')
+        }
     }
 
     fn load(&mut self) {
@@ -109,18 +139,32 @@ mod tests {
             12880
         );
     }
-    // #[test]
-    // fn day10_part2_example() {
-    //     assert_eq!(
-    //         compute(Path::new("src/inputs/day10_example.txt"), 10).unwrap(),
-    //         1
-    //     );
-    // }
-    // #[test]
-    // fn day10_part2_input() {
-    //     assert_eq!(
-    //         compute(Path::new("src/inputs/day10_input.txt"), 10).unwrap(),
-    //         2449
-    //     );
-    // }
+    #[test]
+    fn day10_part2_example() {
+        let want = "\
+        ##..##..##..##..##..##..##..##..##..##..\n\
+        ###...###...###...###...###...###...###.\n\
+        ####....####....####....####....####....\n\
+        #####.....#####.....#####.....#####.....\n\
+        ######......######......######......####\n\
+        #######.......#######.......#######.....\n";
+        assert_eq!(
+            compute2(Path::new("src/inputs/day10_example.txt")).unwrap(),
+            want
+        );
+    }
+    #[test]
+    fn day10_part2_input() {
+        let want = "\
+        ####..##....##..##..###....##.###..####.\n\
+        #....#..#....#.#..#.#..#....#.#..#.#....\n\
+        ###..#.......#.#..#.#..#....#.#..#.###..\n\
+        #....#.......#.####.###.....#.###..#....\n\
+        #....#..#.#..#.#..#.#....#..#.#.#..#....\n\
+        #.....##...##..#..#.#.....##..#..#.####.\n";
+        assert_eq!(
+            compute2(Path::new("src/inputs/day10_input.txt")).unwrap(),
+            want
+        );
+    }
 }
