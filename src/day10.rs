@@ -1,35 +1,29 @@
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 use std::path::Path;
-use Inst::*;
+use Instruction::*;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub fn compute1(p: &Path) -> Result<isize> {
-    let instrs: Vec<Inst> = File::open(p)
-        .map_err(io::Error::into)
-        .map(BufReader::new)
-        .map(BufRead::lines)
-        .and_then(|reader| {
-            reader
-                .map(|line| line.map_err(io::Error::into).and_then(|s| parse(&s)))
-                .collect::<Result<Vec<_>>>()
-        })?;
-    let mut cpu = CPU::new(instrs);
-    let times = vec![20, 60, 100, 140, 180, 220];
-    Ok(times
-        .iter()
+    let mut cpu = CPU::new(load_instructions(p)?);
+    Ok((20..=220)
+        .step_by(40)
         .map(|t| {
-            while cpu.cycle < *t {
-                cpu.tick();
-            }
-            cpu.x * (*t as isize)
+            cpu.tick_until(t);
+            cpu.x * (t as isize)
         })
         .sum::<isize>())
 }
 
 pub fn compute2(p: &Path) -> Result<String> {
-    let instrs: Vec<Inst> = File::open(p)
+    let mut cpu = CPU::new(load_instructions(p)?);
+    cpu.tick_until(240);
+    Ok(cpu.display)
+}
+
+fn load_instructions(p: &Path) -> Result<Vec<Instruction>> {
+    File::open(p)
         .map_err(io::Error::into)
         .map(BufReader::new)
         .map(BufRead::lines)
@@ -37,34 +31,29 @@ pub fn compute2(p: &Path) -> Result<String> {
             reader
                 .map(|line| line.map_err(io::Error::into).and_then(|s| parse(&s)))
                 .collect::<Result<Vec<_>>>()
-        })?;
-    let mut cpu = CPU::new(instrs);
-    while cpu.cycle < 240 {
-        cpu.tick();
-    }
-    Ok(cpu.display)
+        })
 }
 
 #[derive(Clone, Copy, Debug)]
-enum Inst {
+enum Instruction {
     AddX(isize),
     NoOp,
 }
 
 #[derive(Debug)]
 struct CPU {
-    program: Vec<Inst>,
+    program: Vec<Instruction>,
     cycle: usize,
     icycles: usize,
     pc: usize,
     x: isize,
-    cur: Option<Inst>,
+    cur: Option<Instruction>,
 
     display: String,
 }
 
 impl CPU {
-    pub fn new(p: Vec<Inst>) -> Self {
+    fn new(p: Vec<Instruction>) -> Self {
         CPU {
             program: p,
             cycle: 0,
@@ -76,32 +65,29 @@ impl CPU {
         }
     }
 
-    pub fn tick(&mut self) {
-        match self.cur {
-            None => self.load(),
-            Some(inst) => match inst {
-                AddX(_) if self.icycles == 0 => {
+    fn tick_until(&mut self, cycle: usize) {
+        while self.cycle < cycle {
+            match self.cur {
+                Some(AddX(_)) if self.icycles == 0 => {
                     self.icycles += 1;
                 }
-                AddX(dx) => {
+                Some(AddX(dx)) => {
                     self.x += dx;
                     self.load();
                 }
-                NoOp => {
+                Some(NoOp) => {
                     self.load();
                 }
-            },
-        }
-        self.cycle += 1;
+                None => self.load(),
+            }
+            self.cycle += 1;
 
-        let pos = (self.cycle as isize - 1) % 40;
-        if (pos - self.x).abs() <= 1 {
-            self.display.push('#');
-        } else {
-            self.display.push('.')
-        }
-        if pos % 40 == 39 {
-            self.display.push('\n')
+            let pos = (self.cycle as isize - 1) % 40;
+            let is_match = (pos - self.x).abs() <= 1;
+            self.display.push(if is_match { '#' } else { '.' });
+            if pos == 39 {
+                self.display.push('\n')
+            }
         }
     }
 
@@ -112,7 +98,7 @@ impl CPU {
     }
 }
 
-fn parse(s: &str) -> Result<Inst> {
+fn parse(s: &str) -> Result<Instruction> {
     match *s.split_whitespace().collect::<Vec<&str>>().as_slice() {
         ["addx", dx] => Ok(AddX(dx.parse::<isize>()?)),
         ["noop"] => Ok(NoOp),
