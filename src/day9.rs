@@ -19,16 +19,22 @@ pub fn compute(p: &Path, l: usize) -> Result<usize> {
         .flatten()
         .collect::<Vec<_>>();
 
-    let mut pos = Pos {
-        rope: vec![Point(0, 0); l],
-    };
-    let mut set = HashSet::new();
-    set.insert(Point(0, 0));
-    for mv in mvs {
-        pos.apply(mv);
-        set.insert(pos.rope[pos.rope.len() - 1]);
-    }
-    Ok(set.len())
+    let mut rope = vec![Point(0, 0); l];
+
+    Ok(mvs
+        .iter()
+        .map(|mv| {
+            rope[0].apply(*mv);
+            *rope
+                .iter_mut()
+                .reduce(|prev, cur| {
+                    cur.pull(*prev);
+                    cur
+                })
+                .unwrap()
+        })
+        .collect::<HashSet<_>>()
+        .len())
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -42,30 +48,22 @@ enum Move {
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 struct Point(isize, isize);
 
-#[derive(Clone, Hash, PartialEq, Eq, Debug)]
-struct Pos {
-    pub rope: Vec<Point>,
-}
-
-impl Pos {
+impl Point {
     pub fn apply(&mut self, mv: Move) {
-        let head = &mut self.rope[0];
-
-        *head = match mv {
-            Move::Left => Point(head.0 - 1, head.1),
-            Move::Right => Point(head.0 + 1, head.1),
-            Move::Up => Point(head.0, head.1 + 1),
-            Move::Down => Point(head.0, head.1 - 1),
+        match mv {
+            Move::Left => self.0 -= 1,
+            Move::Right => self.0 += 1,
+            Move::Up => self.1 += 1,
+            Move::Down => self.1 -= 1,
         };
-        let mut head = self.rope[0];
-        for mut tail in self.rope.iter_mut().skip(1) {
-            let dx = head.0 - tail.0;
-            let dy = head.1 - tail.1;
-            if (dx * dx + dy * dy) > 2 {
-                tail.0 += dx.signum();
-                tail.1 += dy.signum();
-            }
-            head = *tail
+    }
+
+    pub fn pull(&mut self, prev: Self) {
+        let dx = prev.0 - self.0;
+        let dy = prev.1 - self.1;
+        if (dx * dx + dy * dy) > 2 {
+            self.0 += dx.signum();
+            self.1 += dy.signum();
         }
     }
 }
