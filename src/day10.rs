@@ -99,7 +99,8 @@ impl CPU {
 }
 
 fn parse(s: &str) -> Result<Instruction> {
-    match *s.split_whitespace().collect::<Vec<&str>>().as_slice() {
+    let tokens: Vec<&str> = s.split_whitespace().collect();
+    match *tokens.as_slice() {
         ["addx", dx] => Ok(AddX(dx.parse::<isize>()?)),
         ["noop"] => Ok(NoOp),
         _ => return Err(format!("invalid instruction: {}", s).into()),
