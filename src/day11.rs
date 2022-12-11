@@ -28,7 +28,43 @@ pub fn compute1(p: &Path) -> Result<usize> {
 
     for _ in 0..20 {
         for i in 0..monkeys.len() {
-            let res = monkeys[i].inspect();
+            let res = monkeys[i].inspect(|x| x / 3);
+            inspections.get_mut(&i).map(|v| *v += res.len());
+            res.iter().for_each(|t| {
+                monkeys[t.to_monkey].items.push_back(t.item);
+            });
+        }
+    }
+    let mut res = inspections.values().collect::<Vec<_>>();
+    res.sort();
+    res.reverse();
+    Ok(res.iter().take(2).map(|r| *r).product())
+}
+
+pub fn compute2(p: &Path) -> Result<usize> {
+    let ss: Vec<String> = File::open(p)
+        .map_err(io::Error::into)
+        .map(BufReader::new)
+        .map(BufRead::lines)
+        .and_then(|reader| {
+            reader
+                .map(|line| line.map_err(io::Error::into))
+                .collect::<Result<Vec<_>>>()
+        })?;
+    let mut monkeys = parse_monkeys(&ss)?;
+    let mut inspections: HashMap<usize, usize> = (0..monkeys.len())
+        .map(|m| (m, 0))
+        .collect::<HashMap<_, _>>();
+
+    let m: usize = monkeys
+        .iter()
+        .map(|m| match m.test {
+            Test::DivisibleBy(x) => x,
+        })
+        .product();
+    for _ in 0..10000 {
+        for i in 0..monkeys.len() {
+            let res = monkeys[i].inspect(|x| x % m);
             inspections.get_mut(&i).map(|v| *v += res.len());
             res.iter().for_each(|t| {
                 monkeys[t.to_monkey].items.push_back(t.item);
@@ -118,7 +154,10 @@ impl Monkey {
         })
     }
 
-    fn inspect(&mut self) -> Vec<Throw> {
+    fn inspect<F>(&mut self, worry_fn: F) -> Vec<Throw>
+    where
+        F: Fn(usize) -> usize,
+    {
         self.items
             .drain(..)
             .map(|level| match self.operation {
@@ -126,7 +165,7 @@ impl Monkey {
                 Op::Mul(x) => level * x,
                 Op::Square => level * level,
             })
-            .map(|level| level / 3)
+            .map(worry_fn)
             .map(|level| {
                 let to_monkey = match self.test {
                     Test::DivisibleBy(x) => {
@@ -163,6 +202,22 @@ mod tests {
         assert_eq!(
             compute1(Path::new("src/inputs/day11_input.txt")).unwrap(),
             67830
+        );
+    }
+
+    #[test]
+    fn day11_part2_example() {
+        assert_eq!(
+            compute2(Path::new("src/inputs/day11_example.txt")).unwrap(),
+            2713310158
+        );
+    }
+
+    #[test]
+    fn day11_part2_input() {
+        assert_eq!(
+            compute2(Path::new("src/inputs/day11_input.txt")).unwrap(),
+            15305381442
         );
     }
 }
