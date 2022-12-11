@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use std::fs::File;
-use std::io::{self, BufRead, BufReader};
+use std::io::{self, BufRead, BufReader, Lines};
 use std::num::ParseIntError;
 use std::path::Path;
 
@@ -45,7 +45,7 @@ fn load_monkeys(p: &Path) -> Result<Vec<Monkey>> {
         .map_err(io::Error::into)
         .map(BufReader::new)
         .map(BufRead::lines)
-        .and_then(|reader| reader.collect::<io::Result<Vec<_>>>())?
+        .and_then(Lines::collect::<io::Result<Vec<_>>>)?
         .split(String::is_empty)
         .map(Monkey::parse)
         .collect()
