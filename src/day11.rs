@@ -26,9 +26,7 @@ where
             *inspections.entry(i).or_insert(0) += monkeys[i]
                 .inspect(&f)
                 .iter()
-                .inspect(|t| {
-                    monkeys[t.to_monkey].items.push_back(t.item);
-                })
+                .inspect(|t| monkeys[t.to_monkey].items.push_back(t.item))
                 .count();
         }
     }
