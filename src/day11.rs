@@ -1,7 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Lines};
-use std::num::ParseIntError;
 use std::path::Path;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -24,20 +23,18 @@ where
     let mut inspections = HashMap::new();
     for _ in 0..rounds {
         for i in 0..monkeys.len() {
-            let n = monkeys[i]
+            *inspections.entry(i).or_insert(0) += monkeys[i]
                 .inspect(&f)
                 .iter()
                 .inspect(|t| {
                     monkeys[t.to_monkey].items.push_back(t.item);
                 })
                 .count();
-            *inspections.entry(i).or_insert(0) += n;
         }
     }
-    let mut res = inspections.values().collect::<Vec<_>>();
+    let mut res = inspections.values().copied().collect::<Vec<_>>();
     res.sort();
-    res.reverse();
-    res.iter().take(2).map(|r| *r).product()
+    res.iter().rev().take(2).product()
 }
 
 fn load_monkeys(p: &Path) -> Result<Vec<Monkey>> {
@@ -82,8 +79,8 @@ impl Monkey {
             .strip_prefix("  Starting items: ")
             .ok_or(format!("invalid line: {}", ss[1]))?
             .split(", ")
-            .map(|i| i.parse::<usize>())
-            .collect::<std::result::Result<VecDeque<_>, ParseIntError>>()?;
+            .map(str::parse::<usize>)
+            .collect::<std::result::Result<VecDeque<_>, _>>()?;
         let operation = match *ss[2].split_whitespace().collect::<Vec<_>>().as_slice() {
             ["Operation:", "new", "=", "old", "*", "old"] => Op::Square,
             ["Operation:", "new", "=", "old", op, operand] => {
@@ -131,16 +128,12 @@ impl Monkey {
                 Op::Square => level * level,
             })
             .map(worry_fn)
-            .map(|level| {
-                let to_monkey = if level % self.divisible_by == 0 {
-                    self.if_true
-                } else {
-                    self.if_false
-                };
-                Throw {
-                    item: level,
-                    to_monkey,
-                }
+            .map(|level| Throw {
+                item: level,
+                to_monkey: match level % self.divisible_by {
+                    0 => self.if_true,
+                    _ => self.if_false,
+                },
             })
             .collect()
     }
