@@ -6,88 +6,56 @@ use std::path::Path;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-pub enum Part {
-    One,
-    Two,
-}
-
 pub fn compute1(p: &Path) -> Result<usize> {
-    let ss: Vec<String> = File::open(p)
-        .map_err(io::Error::into)
-        .map(BufReader::new)
-        .map(BufRead::lines)
-        .and_then(|reader| {
-            reader
-                .map(|line| line.map_err(io::Error::into))
-                .collect::<Result<Vec<_>>>()
-        })?;
-    let mut monkeys = parse_monkeys(&ss)?;
-    let mut inspections: HashMap<usize, usize> = (0..monkeys.len())
-        .map(|m| (m, 0))
-        .collect::<HashMap<_, _>>();
-
-    for _ in 0..20 {
-        for i in 0..monkeys.len() {
-            let res = monkeys[i].inspect(|x| x / 3);
-            inspections.get_mut(&i).map(|v| *v += res.len());
-            res.iter().for_each(|t| {
-                monkeys[t.to_monkey].items.push_back(t.item);
-            });
-        }
-    }
-    let mut res = inspections.values().collect::<Vec<_>>();
-    res.sort();
-    res.reverse();
-    Ok(res.iter().take(2).map(|r| *r).product())
+    let monkeys = load_monkeys(p)?;
+    Ok(chase(monkeys, 20, |x| x / 3))
 }
 
 pub fn compute2(p: &Path) -> Result<usize> {
-    let ss: Vec<String> = File::open(p)
-        .map_err(io::Error::into)
-        .map(BufReader::new)
-        .map(BufRead::lines)
-        .and_then(|reader| {
-            reader
-                .map(|line| line.map_err(io::Error::into))
-                .collect::<Result<Vec<_>>>()
-        })?;
-    let mut monkeys = parse_monkeys(&ss)?;
-    let mut inspections: HashMap<usize, usize> = (0..monkeys.len())
-        .map(|m| (m, 0))
-        .collect::<HashMap<_, _>>();
+    let monkeys = load_monkeys(p)?;
+    let period: usize = monkeys.iter().map(|m| m.divisible_by).product();
+    Ok(chase(monkeys, 10000, |x| x % period))
+}
 
-    let m: usize = monkeys
-        .iter()
-        .map(|m| match m.test {
-            Test::DivisibleBy(x) => x,
-        })
-        .product();
-    for _ in 0..10000 {
+fn chase<F>(mut monkeys: Vec<Monkey>, rounds: usize, f: F) -> usize
+where
+    F: Fn(usize) -> usize,
+{
+    let mut inspections = HashMap::new();
+    for _ in 0..rounds {
         for i in 0..monkeys.len() {
-            let res = monkeys[i].inspect(|x| x % m);
-            inspections.get_mut(&i).map(|v| *v += res.len());
-            res.iter().for_each(|t| {
-                monkeys[t.to_monkey].items.push_back(t.item);
-            });
+            let n = monkeys[i]
+                .inspect(&f)
+                .iter()
+                .inspect(|t| {
+                    monkeys[t.to_monkey].items.push_back(t.item);
+                })
+                .count();
+            *inspections.entry(i).or_insert(0) += n;
         }
     }
     let mut res = inspections.values().collect::<Vec<_>>();
     res.sort();
     res.reverse();
-    Ok(res.iter().take(2).map(|r| *r).product())
+    res.iter().take(2).map(|r| *r).product()
 }
 
-fn parse_monkeys(ss: &[String]) -> Result<Vec<Monkey>> {
-    ss.split(|s| s.is_empty())
-        .map(|l| Monkey::parse(l))
-        .collect::<Result<Vec<_>>>()
+fn load_monkeys(p: &Path) -> Result<Vec<Monkey>> {
+    File::open(p)
+        .map_err(io::Error::into)
+        .map(BufReader::new)
+        .map(BufRead::lines)
+        .and_then(|reader| reader.collect::<io::Result<Vec<_>>>())?
+        .split(String::is_empty)
+        .map(Monkey::parse)
+        .collect()
 }
 
 #[derive(Debug)]
 struct Monkey {
     pub items: VecDeque<usize>,
     pub operation: Op,
-    pub test: Test,
+    pub divisible_by: usize,
     pub if_true: usize,
     pub if_false: usize,
 }
@@ -102,11 +70,6 @@ enum Op {
     Add(usize),
     Mul(usize),
     Square,
-}
-
-#[derive(Debug)]
-enum Test {
-    DivisibleBy(usize),
 }
 
 impl Monkey {
@@ -133,8 +96,8 @@ impl Monkey {
             }
             _ => return Err(format!("invalid third line: {}", ss[2]).into()),
         };
-        let test: Test = match *ss[3].split_whitespace().collect::<Vec<_>>().as_slice() {
-            ["Test:", "divisible", "by", divisor] => Test::DivisibleBy(divisor.parse()?),
+        let divisible_by: usize = match *ss[3].split_whitespace().collect::<Vec<_>>().as_slice() {
+            ["Test:", "divisible", "by", divisor] => divisor.parse()?,
             _ => return Err(format!("invalid fourth line: {}", ss[2]).into()),
         };
         let if_true: usize = match *ss[4].split_whitespace().collect::<Vec<_>>().as_slice() {
@@ -148,7 +111,7 @@ impl Monkey {
         Ok(Monkey {
             items,
             operation,
-            test,
+            divisible_by,
             if_true,
             if_false,
         })
@@ -167,18 +130,14 @@ impl Monkey {
             })
             .map(worry_fn)
             .map(|level| {
-                let to_monkey = match self.test {
-                    Test::DivisibleBy(x) => {
-                        if level % x == 0 {
-                            self.if_true
-                        } else {
-                            self.if_false
-                        }
-                    }
+                let to_monkey = if level % self.divisible_by == 0 {
+                    self.if_true
+                } else {
+                    self.if_false
                 };
                 Throw {
                     item: level,
-                    to_monkey: to_monkey,
+                    to_monkey,
                 }
             })
             .collect()
