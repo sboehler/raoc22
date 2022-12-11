@@ -87,7 +87,7 @@ impl Monkey {
         let operation = match *ss[2].split_whitespace().collect::<Vec<_>>().as_slice() {
             ["Operation:", "new", "=", "old", "*", "old"] => Op::Square,
             ["Operation:", "new", "=", "old", op, operand] => {
-                let n: usize = operand.parse().unwrap();
+                let n: usize = operand.parse()?;
                 match op {
                     "*" => Op::Mul(n),
                     "+" => Op::Add(n),
