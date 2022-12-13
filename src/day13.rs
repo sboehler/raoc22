@@ -9,7 +9,7 @@ use Packet::*;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub fn compute1(p: &Path) -> Result<usize> {
-    Ok(load_all(p)?
+    Ok(load(p)?
         .chunks(2)
         .enumerate()
         .filter_map(|(i, ps)| match &ps {
@@ -20,7 +20,7 @@ pub fn compute1(p: &Path) -> Result<usize> {
 }
 
 pub fn compute2(p: &Path) -> Result<usize> {
-    let mut packets = load_all(p)?;
+    let mut packets = load(p)?;
     let div1: Packet = "[[2]]".parse()?;
     let div2: Packet = "[[6]]".parse()?;
     packets.push(div1.clone());
@@ -32,7 +32,7 @@ pub fn compute2(p: &Path) -> Result<usize> {
     }
 }
 
-fn load_all(p: &Path) -> Result<Vec<Packet>> {
+fn load(p: &Path) -> Result<Vec<Packet>> {
     File::open(p)
         .map_err(io::Error::into)
         .map(BufReader::new)
@@ -55,19 +55,15 @@ impl Packet {
         let mut vs = Vec::new();
         while let Some(c) = chars.next() {
             let pkt = match c {
-                '[' => {
-                    Packet::from_chars(chars)?,
-                }
+                '[' => Packet::from_chars(chars)?,
                 '0'..='9' => {
                     let mut s = String::from(c);
                     while let Some(d) = chars.next_if(|ch| ch.is_numeric()) {
                         s.push(d)
                     }
-                   Packet::Int(s.parse::<isize>()?),
+                    Packet::Int(s.parse::<isize>()?)
                 }
-                ']' => {
-                    break;
-                }
+                ']' => break,
                 _ => return Err(format!("expected [ or number, got {}", c).into()),
             };
             vs.push(pkt);
