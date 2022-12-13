@@ -51,32 +51,31 @@ enum Packet {
 }
 
 impl Packet {
-    fn parse_packet(chars: &mut Peekable<Chars>) -> Result<Packet> {
+    fn from_chars(chars: &mut Peekable<Chars>) -> Result<Packet> {
         let mut vs = Vec::new();
         while let Some(c) = chars.next() {
-            match c {
+            let pkt = match c {
                 '[' => {
-                    let elem = Packet::parse_packet(chars)?;
-                    vs.push(elem);
+                    Packet::from_chars(chars)?,
                 }
                 '0'..='9' => {
                     let mut s = String::from(c);
                     while let Some(d) = chars.next_if(|ch| ch.is_numeric()) {
                         s.push(d)
                     }
-                    let elem = Packet::Int(s.parse::<isize>()?);
-                    vs.push(elem);
+                   Packet::Int(s.parse::<isize>()?),
                 }
                 ']' => {
                     break;
                 }
                 _ => return Err(format!("expected [ or number, got {}", c).into()),
-            }
+            };
+            vs.push(pkt);
             match chars.next() {
                 Some(']') => break,
                 Some(',') => continue,
-                None => return Err("unexpected end of input".into()),
                 Some(c) => return Err(format!("expected ']' or ',', got '{}'", c).into()),
+                None => return Err("unexpected end of input".into()),
             }
         }
         Ok(Packet::List(Box::new(vs)))
@@ -89,7 +88,7 @@ impl FromStr for Packet {
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         let mut chars = s.chars().peekable();
         if let Some('[') = chars.next() {
-            Packet::parse_packet(&mut chars)
+            Packet::from_chars(&mut chars)
                 .map_err(|e| format!("invalid packet: {} error: {}", s, e))
         } else {
             Err(format!("invalid packet: {}", s))
