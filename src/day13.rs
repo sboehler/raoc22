@@ -114,34 +114,25 @@ mod tests {
     use super::*;
     use std::path::Path;
 
+    const EXAMPLE: &str = "src/inputs/day13_example.txt";
+    const INPUT: &str = "src/inputs/day13_input.txt";
+
     #[test]
     fn day13_part1_example() {
-        assert_eq!(
-            compute1(Path::new("src/inputs/day13_example.txt")).unwrap(),
-            13
-        );
+        assert_eq!(compute1(Path::new(EXAMPLE)).unwrap(), 13);
     }
     #[test]
     fn day13_part1_input() {
-        assert_eq!(
-            compute1(Path::new("src/inputs/day13_input.txt")).unwrap(),
-            5852
-        );
+        assert_eq!(compute1(Path::new(INPUT)).unwrap(), 5852);
     }
 
     #[test]
     fn day13_part2_example() {
-        assert_eq!(
-            compute2(Path::new("src/inputs/day13_example.txt")).unwrap(),
-            140
-        );
+        assert_eq!(compute2(Path::new(EXAMPLE)).unwrap(), 140);
     }
 
     #[test]
     fn day13_part2_input() {
-        assert_eq!(
-            compute2(Path::new("src/inputs/day13_input.txt")).unwrap(),
-            24190
-        );
+        assert_eq!(compute2(Path::new(INPUT)).unwrap(), 24190);
     }
 }
