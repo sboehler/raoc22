@@ -47,7 +47,7 @@ fn load(p: &Path) -> Result<Vec<Packet>> {
 #[derive(Eq, PartialEq, Debug, Clone)]
 enum Packet {
     Int(isize),
-    List(Box<Vec<Packet>>),
+    List(Vec<Packet>),
 }
 
 impl Packet {
@@ -74,7 +74,7 @@ impl Packet {
                 None => return Err("unexpected end of input".into()),
             }
         }
-        Ok(Packet::List(Box::new(vs)))
+        Ok(Packet::List(vs))
     }
 }
 
@@ -98,7 +98,7 @@ impl Ord for Packet {
             (Int(a), Int(b)) => a.cmp(b),
             (List(a), List(b)) => a.cmp(b),
             (Int(a), List(b)) => vec![Int(*a)].cmp(b),
-            (List(a), Int(b)) => a.cmp(&Box::new(vec![Int(*b)])),
+            (List(a), Int(b)) => a.cmp(&vec![Int(*b)]),
         }
     }
 }
