@@ -19,30 +19,22 @@ pub fn compute1(p: &Path, y: isize) -> Result<usize> {
 pub fn compute2(p: &Path, rng: RangeInclusive<isize>) -> Result<isize> {
     let sensors = load(p)?;
     for y in rng.clone() {
-        let scan_lines = sensors.scan_line(y);
+        let scan_lines = sensors.scan_line(y, &rng);
         let mut scan_lines_iter = scan_lines.iter();
         let mut x = *rng.start();
         let mut lvl = 0;
         while let Some(sl) = scan_lines_iter.next() {
-            if sl.pos < x {
-                lvl += sl.change;
-                continue;
+            if sl.pos > x && lvl == 0 {
+                return Ok(4000000 * x + y);
             }
-            if sl.pos == x {
-                lvl += sl.change;
-                if lvl == 0 {
-                    return Ok(4000000 * x + y);
-                }
-            }
+            lvl += sl.change;
             if sl.pos > x {
-                if lvl == 0 {
-                    return Ok(4000000 * x + y);
-                }
-                lvl += sl.change;
                 x = sl.pos;
                 if x > *rng.end() {
                     break;
                 }
+            } else if sl.pos == x && lvl == 0 {
+                return Ok(4000000 * x + y);
             }
         }
     }
@@ -138,10 +130,13 @@ impl Sensors {
         })
     }
 
-    fn scan_line(&self, y: isize) -> Vec<ScanPos> {
-        let mut v: Vec<ScanPos> = Vec::new();
+    fn scan_line(&self, y: isize, rng: &RangeInclusive<isize>) -> Vec<ScanPos> {
+        let mut v: Vec<ScanPos> = Vec::with_capacity(self.0.len());
         for interval in self.0.iter().map(|s| s.scan_line(y)) {
             if interval.is_empty() {
+                continue;
+            }
+            if interval.end() < rng.start() || interval.start() > rng.end() {
                 continue;
             }
             v.push(ScanPos {
@@ -154,7 +149,7 @@ impl Sensors {
             });
         }
         v.sort();
-        let mut res: Vec<ScanPos> = Vec::new();
+        let mut res: Vec<ScanPos> = Vec::with_capacity(v.len());
         let mut i = isize::MIN;
         for sp in v {
             if sp.pos != i {
