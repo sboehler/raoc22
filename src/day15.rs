@@ -13,8 +13,40 @@ pub fn compute1(p: &Path, y: isize) -> Result<usize> {
     Ok(sensors
         .range_x(y)
         .filter(|x| sensors.contains(Pos { x: *x, y }))
-        // .inspect(|x| println!("{}, ", x))
         .count())
+}
+
+pub fn compute2(p: &Path, rng: RangeInclusive<isize>) -> Result<isize> {
+    let sensors = load(p)?;
+    for y in rng.clone() {
+        let scan_lines = sensors.scan_line(y);
+        let mut scan_lines_iter = scan_lines.iter();
+        let mut x = *rng.start();
+        let mut lvl = 0;
+        while let Some(sl) = scan_lines_iter.next() {
+            if sl.pos < x {
+                lvl += sl.change;
+                continue;
+            }
+            if sl.pos == x {
+                lvl += sl.change;
+                if lvl == 0 {
+                    return Ok(4000000 * x + y);
+                }
+            }
+            if sl.pos > x {
+                if lvl == 0 {
+                    return Ok(4000000 * x + y);
+                }
+                lvl += sl.change;
+                x = sl.pos;
+                if x > *rng.end() {
+                    break;
+                }
+            }
+        }
+    }
+    Err("not found".into())
 }
 
 fn load(p: &Path) -> Result<Sensors> {
@@ -30,10 +62,10 @@ fn load(p: &Path) -> Result<Sensors> {
     ))
 }
 
-enum Range {
-    Start(isize),
-    End(isize),
-    Beacon(isize),
+#[derive(PartialEq, PartialOrd, Eq, Ord, Debug)]
+struct ScanPos {
+    pos: isize,
+    change: isize,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -64,6 +96,11 @@ impl Sensor {
 
     fn is_beacon(&self, pos: &Pos) -> bool {
         return self.beacon == *pos || self.pos == *pos;
+    }
+
+    fn scan_line(&self, y: isize) -> RangeInclusive<isize> {
+        let dx = self.pos.distance(&self.beacon) - (y - self.pos.y).abs();
+        self.pos.x - dx..=self.pos.x + dx
     }
 }
 
@@ -101,6 +138,36 @@ impl Sensors {
         })
     }
 
+    fn scan_line(&self, y: isize) -> Vec<ScanPos> {
+        let mut v: Vec<ScanPos> = Vec::new();
+        for interval in self.0.iter().map(|s| s.scan_line(y)) {
+            if interval.is_empty() {
+                continue;
+            }
+            v.push(ScanPos {
+                pos: *interval.start(),
+                change: 1,
+            });
+            v.push(ScanPos {
+                pos: *interval.end() + 1,
+                change: -1,
+            });
+        }
+        v.sort();
+        let mut res: Vec<ScanPos> = Vec::new();
+        let mut i = isize::MIN;
+        for sp in v {
+            if sp.pos != i {
+                i = sp.pos;
+                res.push(sp);
+            } else {
+                let i = res.len() - 1;
+                res[i].change += sp.change
+            }
+        }
+        res
+    }
+
     fn contains(&self, pos: Pos) -> bool {
         self.0.iter().any(|s| s.contains(&pos)) && !self.0.iter().any(|s| s.is_beacon(&pos))
     }
@@ -129,14 +196,16 @@ mod tests {
     fn day15_part1_input() {
         assert_eq!(compute1(Path::new(INPUT), 2000000).unwrap(), 4873353);
     }
+    #[test]
+    fn day15_part2_example() {
+        assert_eq!(compute2(Path::new(EXAMPLE), 0..=20).unwrap(), 56000011);
+    }
 
-    // #[test]
-    // fn day15_part2_example() {
-    //     assert_eq!(compute2(Path::new(EXAMPLE)).unwrap(), 140);
-    // }
-
-    // #[test]
-    // fn day15_part2_input() {
-    //     assert_eq!(compute2(Path::new(INPUT)).unwrap(), 24190);
-    // }
+    #[test]
+    fn day15_part2_input() {
+        assert_eq!(
+            compute2(Path::new(INPUT), 0..=4000000).unwrap(),
+            11600823139120
+        );
+    }
 }
