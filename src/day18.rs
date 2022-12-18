@@ -10,7 +10,7 @@ pub fn compute1(p: &Path) -> Result<usize> {
     let mut v = load(p)?.iter().flat_map(Point::faces).collect::<Vec<_>>();
     let l = v.len();
     v.sort();
-    v.dedup();
+    v.dedup_by(|s1, s2| s1.origin == s2.origin && s1.dimension == s2.dimension);
     Ok(2 * v.len() - l)
 }
 
@@ -28,14 +28,21 @@ fn load(p: &Path) -> Result<Vec<Point>> {
 #[derive(Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 struct Surface {
     origin: Point,
+    dimension: Dimension,
     orientation: Orientation,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
-enum Orientation {
+enum Dimension {
     XY,
     YZ,
     XZ,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
+enum Orientation {
+    Plus,
+    Minus,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
@@ -50,15 +57,18 @@ impl Point {
         vec![
             Surface {
                 origin: *self,
-                orientation: Orientation::XY,
+                dimension: Dimension::XY,
+                orientation: Orientation::Minus,
             },
             Surface {
                 origin: *self,
-                orientation: Orientation::YZ,
+                dimension: Dimension::YZ,
+                orientation: Orientation::Minus,
             },
             Surface {
                 origin: *self,
-                orientation: Orientation::XZ,
+                dimension: Dimension::XZ,
+                orientation: Orientation::Minus,
             },
             Surface {
                 origin: Point {
@@ -66,7 +76,8 @@ impl Point {
                     y: self.y,
                     z: self.z + 1,
                 },
-                orientation: Orientation::XY,
+                dimension: Dimension::XY,
+                orientation: Orientation::Plus,
             },
             Surface {
                 origin: Point {
@@ -74,7 +85,8 @@ impl Point {
                     y: self.y,
                     z: self.z,
                 },
-                orientation: Orientation::YZ,
+                dimension: Dimension::YZ,
+                orientation: Orientation::Plus,
             },
             Surface {
                 origin: Point {
@@ -82,7 +94,8 @@ impl Point {
                     y: self.y + 1,
                     z: self.z,
                 },
-                orientation: Orientation::XZ,
+                dimension: Dimension::XZ,
+                orientation: Orientation::Plus,
             },
         ]
     }
