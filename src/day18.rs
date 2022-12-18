@@ -10,7 +10,7 @@ pub fn compute1(p: &Path) -> Result<usize> {
     let mut v = load(p)?.iter().flat_map(Point::faces).collect::<Vec<_>>();
     let l = v.len();
     v.sort();
-    v.dedup_by(|s1, s2| s1.origin == s2.origin && s1.dimension == s2.dimension);
+    v.dedup();
     Ok(2 * v.len() - l)
 }
 
@@ -29,7 +29,6 @@ fn load(p: &Path) -> Result<Vec<Point>> {
 struct Surface {
     origin: Point,
     dimension: Dimension,
-    orientation: Orientation,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
@@ -37,12 +36,6 @@ enum Dimension {
     XY,
     YZ,
     XZ,
-}
-
-#[derive(Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
-enum Orientation {
-    Plus,
-    Minus,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
@@ -58,17 +51,14 @@ impl Point {
             Surface {
                 origin: *self,
                 dimension: Dimension::XY,
-                orientation: Orientation::Minus,
             },
             Surface {
                 origin: *self,
                 dimension: Dimension::YZ,
-                orientation: Orientation::Minus,
             },
             Surface {
                 origin: *self,
                 dimension: Dimension::XZ,
-                orientation: Orientation::Minus,
             },
             Surface {
                 origin: Point {
@@ -77,7 +67,6 @@ impl Point {
                     z: self.z + 1,
                 },
                 dimension: Dimension::XY,
-                orientation: Orientation::Plus,
             },
             Surface {
                 origin: Point {
@@ -86,7 +75,6 @@ impl Point {
                     z: self.z,
                 },
                 dimension: Dimension::YZ,
-                orientation: Orientation::Plus,
             },
             Surface {
                 origin: Point {
@@ -95,7 +83,6 @@ impl Point {
                     z: self.z,
                 },
                 dimension: Dimension::XZ,
-                orientation: Orientation::Plus,
             },
         ]
     }
